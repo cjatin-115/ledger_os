@@ -12,6 +12,7 @@ from app.db.base import Base, TimestampMixin, UUIDMixin
 if TYPE_CHECKING:
     from app.db.models.bill_adjustment import BillAdjustment
     from app.db.models.bill_item import BillItem
+    from app.db.models.payment_allocation import PaymentAllocation
 
 
 class BillStatus(StrEnum):
@@ -135,3 +136,7 @@ class Bill(UUIDMixin, TimestampMixin, Base):
         back_populates="bill",
         cascade="all, delete-orphan",
     )
+
+    allocations: Mapped[list["PaymentAllocation"]] = relationship(
+    back_populates="bill",
+)
