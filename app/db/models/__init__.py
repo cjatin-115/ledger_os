@@ -1,3 +1,5 @@
+from app.db.models.account_transaction import AccountTransaction
+from app.db.models.attachment import Attachment
 from app.db.models.audit_log import AuditLog
 from app.db.models.bill import Bill
 from app.db.models.bill_adjustment import BillAdjustment
@@ -12,6 +14,8 @@ from app.db.models.supplier import Supplier
 from app.db.models.user import User
 
 __all__ = [
+    "AccountTransaction",
+    "Attachment",
     "AuditLog",
     "Bill",
     "BillAdjustment",
