@@ -22,14 +22,18 @@ class UUIDMixin:
     )
 
 
-class TimestampMixin:
-    """Provides creation and update timestamps to ORM models."""
+class CreatedAtMixin:
+    """Provides a creation timestamp to immutable records."""
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
     )
+
+
+class TimestampMixin(CreatedAtMixin):
+    """Provides creation and update timestamps to mutable ORM models."""
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

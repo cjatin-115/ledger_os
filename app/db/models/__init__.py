@@ -1,5 +1,6 @@
 from app.db.models.audit_log import AuditLog
 from app.db.models.bill import Bill
+from app.db.models.bill_adjustment import BillAdjustment
 from app.db.models.bill_item import BillItem
 from app.db.models.organization import Organization
 from app.db.models.payment import Payment
@@ -13,6 +14,7 @@ from app.db.models.user import User
 __all__ = [
     "AuditLog",
     "Bill",
+    "BillAdjustment",
     "BillItem",
     "Organization",
     "Permission",
