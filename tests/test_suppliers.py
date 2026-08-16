@@ -41,15 +41,18 @@ async def test_list_suppliers(client: AsyncClient) -> None:
 
     assert create_response.status_code == 201
 
+    created_supplier = create_response.json()
+
     response = await client.get("/api/v1/suppliers")
 
     assert response.status_code == 200
 
     data = response.json()
 
-    assert len(data) == 1
-    assert data[0]["name"] == "ABC Electricals"
-
+    assert any(
+        supplier["id"] == created_supplier["id"]
+        for supplier in data
+    )
 
 @pytest.mark.asyncio
 async def test_get_supplier(client: AsyncClient) -> None:

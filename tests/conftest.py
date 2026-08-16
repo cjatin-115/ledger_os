@@ -13,6 +13,7 @@ from sqlalchemy.pool import NullPool
 
 from app.api.deps import get_current_organization_id
 from app.core.config import settings
+from app.db.models.bill import Bill
 from app.db.models.organization import Organization
 from app.db.models.supplier import Supplier
 from app.db.session import get_db
@@ -20,6 +21,10 @@ from app.main import app
 
 TEST_ORGANIZATION_ID = UUID(
     "00000000-0000-0000-0000-000000000010"
+)
+
+TEST_SUPPLIER_ID = UUID(
+    "00000000-0000-0000-0000-000000000011"
 )
 
 
@@ -72,7 +77,28 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
                 is_active=True,
             )
             db.add(organization)
-            await db.commit()
+
+        supplier = await db.get(
+            Supplier,
+            TEST_SUPPLIER_ID,
+        )
+
+        if supplier is None:
+            supplier = Supplier(
+                id=TEST_SUPPLIER_ID,
+                organization_id=TEST_ORGANIZATION_ID,
+                name="Test Supplier",
+                contact_person="Test Contact",
+                phone="9999999999",
+                email="test@supplier.local",
+                gstin="27TESTSUPPLR01",
+                address="Test Address",
+                payment_terms_days=30,
+                is_active=True,
+            )
+            db.add(supplier)
+
+        await db.commit()
 
     transport = ASGITransport(app=app)
 
@@ -84,10 +110,17 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
     async with TestSessionLocal() as db:
         await db.execute(
+            delete(Bill).where(
+                Bill.organization_id == TEST_ORGANIZATION_ID
+            )
+        )
+
+        await db.execute(
             delete(Supplier).where(
                 Supplier.organization_id == TEST_ORGANIZATION_ID
             )
         )
+
         await db.commit()
 
 
