@@ -13,6 +13,7 @@ from sqlalchemy.pool import NullPool
 
 from app.api.deps import get_current_organization_id
 from app.core.config import settings
+from app.db.models.account_transaction import AccountTransaction
 from app.db.models.bill import Bill
 from app.db.models.organization import Organization
 from app.db.models.supplier import Supplier
@@ -109,6 +110,13 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         yield client
 
     async with TestSessionLocal() as db:
+        await db.execute(
+            delete(AccountTransaction).where(
+                AccountTransaction.organization_id
+                == TEST_ORGANIZATION_ID
+            )
+        )
+
         await db.execute(
             delete(Bill).where(
                 Bill.organization_id == TEST_ORGANIZATION_ID

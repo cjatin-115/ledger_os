@@ -7,7 +7,7 @@ SUPPLIER_ID = "00000000-0000-0000-0000-000000000011"
 
 BILL_PAYLOAD = {
     "supplier_id": SUPPLIER_ID,
-    "bill_number": "TEST-INV-1001",
+    "bill_number": "TEST-CREATE-1001",
     "bill_date": "2026-08-16",
     "due_date": "2026-09-15",
     "subtotal": 10000.00,
@@ -57,7 +57,7 @@ async def test_create_bill(client: AsyncClient) -> None:
     data = response.json()
 
     assert UUID(data["id"])
-    assert data["bill_number"] == "TEST-INV-1001"
+    assert data["bill_number"] == "TEST-CREATE-1001"
     assert data["status"] == "draft"
     assert data["source_type"] == "manual"
     assert len(data["items"]) == 2
@@ -80,7 +80,7 @@ async def test_list_bills(client: AsyncClient) -> None:
     data = response.json()
 
     assert len(data) == 1
-    assert data[0]["bill_number"] == "TEST-INV-1001"
+    assert data[0]["bill_number"] == "TEST-CREATE-1001"
     assert len(data[0]["items"]) == 2
 
 
@@ -104,7 +104,7 @@ async def test_get_bill(client: AsyncClient) -> None:
     data = response.json()
 
     assert data["id"] == bill_id
-    assert data["bill_number"] == "TEST-INV-1001"
+    assert data["bill_number"] == "TEST-CREATE-1001"
     assert len(data["items"]) == 2
 
 
@@ -133,7 +133,7 @@ async def test_bill_cannot_have_due_date_before_bill_date(
 ) -> None:
     payload = {
         **BILL_PAYLOAD,
-        "bill_number": "TEST-INV-1002",
+        "bill_number": "TEST-CREATE-1002",
         "bill_date": "2026-08-16",
         "due_date": "2026-08-01",
     }
@@ -152,7 +152,7 @@ async def test_bill_requires_existing_supplier(
 ) -> None:
     payload = {
         **BILL_PAYLOAD,
-        "bill_number": "TEST-INV-1003",
+        "bill_number": "TEST-CREATE-1003",
         "supplier_id": "00000000-0000-0000-0000-000000000099",
     }
 
@@ -180,3 +180,56 @@ async def test_invalid_bill_input(
     )
 
     assert response.status_code == 422
+
+@pytest.mark.asyncio
+async def test_post_bill_creates_ledger_transaction(
+    client: AsyncClient,
+) -> None:
+    create_response = await client.post(
+        "/api/v1/bills",
+        json=BILL_PAYLOAD,
+    )
+
+    assert create_response.status_code == 201
+
+    bill_id = create_response.json()["id"]
+
+    response = await client.post(
+        f"/api/v1/bills/{bill_id}/post",
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == bill_id
+    assert data["status"] == "posted"
+
+
+@pytest.mark.asyncio
+async def test_posting_bill_twice_is_rejected(
+    client: AsyncClient,
+) -> None:
+    create_response = await client.post(
+        "/api/v1/bills",
+        json={
+            **BILL_PAYLOAD,
+            "bill_number": "TEST-POST-1001",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    bill_id = create_response.json()["id"]
+
+    first_post = await client.post(
+        f"/api/v1/bills/{bill_id}/post",
+    )
+
+    assert first_post.status_code == 200
+
+    second_post = await client.post(
+        f"/api/v1/bills/{bill_id}/post",
+    )
+
+    assert second_post.status_code == 409

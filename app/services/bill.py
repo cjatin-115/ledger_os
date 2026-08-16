@@ -2,8 +2,15 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.account_transaction import (
+    AccountTransaction,
+    AccountTransactionType,
+)
 from app.db.models.bill import Bill, BillSourceType, BillStatus
 from app.db.models.bill_item import BillItem
+from app.repositories.account_transaction import (
+    AccountTransactionRepository,
+)
 from app.repositories.bill import BillRepository
 from app.repositories.supplier import SupplierRepository
 from app.schemas.bill import BillCreate
@@ -16,6 +23,7 @@ class BillService:
         self.db = db
         self.repository = BillRepository(db)
         self.supplier_repository = SupplierRepository(db)
+        self.transaction_repository = AccountTransactionRepository(db)
 
     async def create(
         self,
@@ -125,9 +133,7 @@ class BillService:
 
         try:
             bill = await self.repository.create(bill)
-
             await self.db.commit()
-
             return bill
 
         except Exception:
@@ -151,3 +157,49 @@ class BillService:
             bill_id=bill_id,
             organization_id=organization_id,
         )
+
+    async def post(
+        self,
+        bill_id: UUID,
+        organization_id: UUID,
+    ) -> Bill:
+        """Post a draft bill into the supplier ledger."""
+
+        bill = await self.repository.get_by_id(
+            bill_id=bill_id,
+            organization_id=organization_id,
+        )
+
+        if bill is None:
+            raise ValueError("Bill not found.")
+
+        if bill.status != BillStatus.DRAFT:
+            raise ValueError(
+                f"Bill cannot be posted from status '{bill.status}'."
+            )
+
+        transaction = AccountTransaction(
+            organization_id=organization_id,
+            supplier_id=bill.supplier_id,
+            transaction_type=AccountTransactionType.BILL,
+            reference_type="bill",
+            reference_id=bill.id,
+            debit_amount=bill.total_amount,
+            credit_amount=0,
+            transaction_date=bill.bill_date,
+            description=f"Supplier bill {bill.bill_number}",
+        )
+
+        try:
+            await self.transaction_repository.create(transaction)
+
+            bill.status = BillStatus.POSTED
+
+            await self.db.flush()
+            await self.db.commit()
+
+        except Exception:
+            await self.db.rollback()
+            raise
+
+        return bill

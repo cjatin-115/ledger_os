@@ -84,3 +84,31 @@ async def get_bill(
         )
 
     return bill
+
+@router.post(
+    "/{bill_id}/post",
+    response_model=BillResponse,
+)
+async def post_bill(
+    bill_id: UUID,
+    organization_id: UUID = Depends(get_current_organization_id),
+    service: BillService = Depends(get_bill_service),
+) -> BillResponse:
+    try:
+        return await service.post(
+            bill_id=bill_id,
+            organization_id=organization_id,
+        )
+    except ValueError as exc:
+        message = str(exc)
+
+        if "not found" in message.lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=message,
+            ) from exc
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=message,
+        ) from exc
