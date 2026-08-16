@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +15,23 @@ class AuditLog(UUIDMixin, CreatedAtMixin, Base):
     """Immutable record of an important action performed in LedgerOS."""
 
     __tablename__ = "audit_logs"
+
+    __table_args__ = (
+        Index(
+            "ix_audit_logs_organization_created_at",
+            "organization_id",
+            "created_at",
+        ),
+        Index(
+            "ix_audit_logs_entity",
+            "entity_type",
+            "entity_id",
+        ),
+        Index(
+            "ix_audit_logs_actor_user_id",
+            "actor_user_id",
+        ),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id"),

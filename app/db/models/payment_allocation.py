@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Numeric
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, CreatedAtMixin, UUIDMixin
@@ -16,6 +16,21 @@ class PaymentAllocation(UUIDMixin, CreatedAtMixin, Base):
     """Represents part of a payment applied to a specific bill."""
 
     __tablename__ = "payment_allocations"
+
+    __table_args__ = (
+        Index(
+            "ix_payment_allocations_payment_id",
+            "payment_id",
+        ),
+        Index(
+            "ix_payment_allocations_bill_id",
+            "bill_id",
+        ),
+        CheckConstraint(
+            "amount > 0",
+            name="ck_payment_allocations_amount_positive",
+        ),
+    )
 
     payment_id: Mapped[UUID] = mapped_column(
         ForeignKey("payments.id", ondelete="CASCADE"),
@@ -36,4 +51,6 @@ class PaymentAllocation(UUIDMixin, CreatedAtMixin, Base):
         back_populates="allocations",
     )
 
-    bill: Mapped["Bill"] = relationship()
+    bill: Mapped["Bill"] = relationship(
+        back_populates="allocations",
+    )

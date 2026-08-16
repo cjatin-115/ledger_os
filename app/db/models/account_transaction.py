@@ -4,7 +4,15 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, Numeric, String, Text
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, CreatedAtMixin, UUIDMixin
@@ -28,6 +36,39 @@ class AccountTransaction(UUIDMixin, CreatedAtMixin, Base):
     """Represents an immutable financial event in a supplier ledger."""
 
     __tablename__ = "account_transactions"
+
+    __table_args__ = (
+        Index(
+            "ix_account_transactions_organization_id",
+            "organization_id",
+        ),
+        Index(
+            "ix_account_transactions_supplier_id",
+            "supplier_id",
+        ),
+        Index(
+            "ix_account_transactions_transaction_date",
+            "transaction_date",
+        ),
+        Index(
+            "ix_account_transactions_reference",
+            "reference_type",
+            "reference_id",
+        ),
+        CheckConstraint(
+            "debit_amount >= 0",
+            name="ck_account_transactions_debit_non_negative",
+        ),
+        CheckConstraint(
+            "credit_amount >= 0",
+            name="ck_account_transactions_credit_non_negative",
+        ),
+        CheckConstraint(
+            "(debit_amount > 0 AND credit_amount = 0) "
+            "OR (debit_amount = 0 AND credit_amount > 0)",
+            name="ck_account_transactions_one_sided",
+        ),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id"),

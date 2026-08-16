@@ -1,6 +1,13 @@
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import (
+    Boolean,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, UUIDMixin
@@ -10,6 +17,20 @@ class Supplier(UUIDMixin, TimestampMixin, Base):
     """Represents a supplier belonging to a LedgerOS organization."""
 
     __tablename__ = "suppliers"
+
+    __table_args__ = (
+        Index(
+            "ix_suppliers_organization_id",
+            "organization_id",
+        ),
+        Index(
+            "uq_suppliers_organization_gstin",
+            "organization_id",
+            "gstin",
+            unique=True,
+            postgresql_where=text("gstin IS NOT NULL"),
+        ),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id"),

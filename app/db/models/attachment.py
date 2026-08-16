@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, CreatedAtMixin, UUIDMixin
@@ -24,6 +24,22 @@ class Attachment(UUIDMixin, CreatedAtMixin, Base):
     """Stores metadata for a file attached to a LedgerOS entity."""
 
     __tablename__ = "attachments"
+
+    __table_args__ = (
+        Index(
+            "ix_attachments_organization_id",
+            "organization_id",
+        ),
+        Index(
+            "ix_attachments_entity",
+            "entity_type",
+            "entity_id",
+        ),
+        Index(
+            "ix_attachments_uploaded_by",
+            "uploaded_by",
+        ),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id"),

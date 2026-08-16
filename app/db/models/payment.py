@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Date, ForeignKey, Numeric, String, Text
+from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, CreatedAtMixin, UUIDMixin
@@ -33,6 +33,25 @@ class Payment(UUIDMixin, CreatedAtMixin, Base):
     """Represents money paid to a supplier."""
 
     __tablename__ = "payments"
+
+    __table_args__ = (
+        Index(
+            "ix_payments_organization_id",
+            "organization_id",
+        ),
+        Index(
+            "ix_payments_supplier_id",
+            "supplier_id",
+        ),
+        Index(
+            "ix_payments_payment_date",
+            "payment_date",
+        ),
+        CheckConstraint(
+            "amount > 0",
+            name="ck_payments_amount_positive",
+        ),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id"),

@@ -3,10 +3,10 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy import CheckConstraint, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base, UUIDMixin
+from app.db.base import Base, CreatedAtMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.db.models.bill import Bill
@@ -23,10 +23,21 @@ class BillAdjustmentType(StrEnum):
     OTHER = "other"
 
 
-class BillAdjustment(UUIDMixin, Base):
+class BillAdjustment(UUIDMixin, CreatedAtMixin, Base):
     """Represents an adjustment applied to a supplier bill."""
 
     __tablename__ = "bill_adjustments"
+
+    __table_args__ = (
+        Index(
+            "ix_bill_adjustments_bill_id",
+            "bill_id",
+        ),
+        CheckConstraint(
+            "amount > 0",
+            name="ck_bill_adjustments_amount_positive",
+        ),
+    )
 
     bill_id: Mapped[UUID] = mapped_column(
         ForeignKey("bills.id", ondelete="CASCADE"),

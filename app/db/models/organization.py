@@ -16,7 +16,6 @@ class Organization(UUIDMixin, TimestampMixin, Base):
 
     gstin: Mapped[str | None] = mapped_column(
         String(15),
-        unique=True,
         nullable=True,
     )
 

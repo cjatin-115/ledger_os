@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Boolean, ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDMixin
@@ -14,6 +14,21 @@ class User(UUIDMixin, TimestampMixin, Base):
     """Represents a user belonging to a LedgerOS organization."""
 
     __tablename__ = "users"
+
+    __table_args__ = (
+        Index(
+            "ix_users_organization_id",
+            "organization_id",
+        ),
+        Index(
+            "ix_users_role_id",
+            "role_id",
+        ),
+        Index(
+            "ix_users_phone_number",
+            "phone_number",
+        ),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(
         ForeignKey("organizations.id"),
