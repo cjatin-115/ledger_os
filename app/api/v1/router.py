@@ -10,5 +10,3 @@ api_router.include_router(suppliers.router)
 api_router.include_router(bills.router)
 api_router.include_router(payments.router)
 api_router.include_router(dashboard.router)
-
-
