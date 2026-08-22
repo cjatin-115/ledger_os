@@ -14,6 +14,7 @@ from sqlalchemy.pool import NullPool
 from app.api.deps import get_current_organization_id, get_current_user
 from app.core.config import settings
 from app.core.permissions import PERMISSION_CATALOG
+from app.db.base import Base
 from app.db.models.account_transaction import AccountTransaction
 from app.db.models.bill import Bill
 from app.db.models.organization import Organization
@@ -200,5 +201,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def cleanup_test_engine() -> AsyncGenerator[None, None]:
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
     await test_engine.dispose()
