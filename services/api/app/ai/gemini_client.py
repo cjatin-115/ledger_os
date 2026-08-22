@@ -6,9 +6,18 @@ import logging
 import re
 from typing import Any
 
-from google import genai
-from google.genai import types
-from PIL import Image, ImageOps
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None
+    types = None
+
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    Image = None
+    ImageOps = None
 
 from app.core.config import settings
 
@@ -31,8 +40,8 @@ def call_gemini_vision(
 ) -> dict[str, Any] | None:
     """Call Google Gemini Vision API using Google GenAI SDK to analyze image content and return structured JSON."""
     api_key = settings.GEMINI_API_KEY
-    if not api_key:
-        logger.info("GEMINI_API_KEY is not set in environment or .env. Using local fallback.")
+    if not api_key or genai is None:
+        logger.info("GEMINI_API_KEY is not set or google-genai is missing. Using local fallback.")
         print("[Gemini AI] GEMINI_API_KEY is empty. Using local OCR fallback.")
         return None
 
