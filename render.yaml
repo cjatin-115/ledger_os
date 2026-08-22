@@ -18,7 +18,7 @@ services:
       - key: MFA_ENCRYPTION_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: "*"
+        value: '["*"]'
       - key: GEMINI_API_KEY
         sync: false
 

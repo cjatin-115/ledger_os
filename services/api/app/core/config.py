@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Any, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,13 +31,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str | None = None
     GOOGLE_CLIENT_ID: str | None = None
     API_PREFIX: str = "/api"
-    CORS_ORIGINS: list[str] = Field(
-        default_factory=lambda: [
-            "http://localhost:3000",
-            "http://localhost:8081",
-            "http://127.0.0.1:3000",
-        ]
-    )
+    CORS_ORIGINS: list[str] | str = ["http://localhost:8081", "http://localhost:19006"]
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -49,15 +43,22 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins(cls, v: Any) -> list[str]:
         if isinstance(v, str):
-            if v.startswith("[") and v.endswith("]"):
+            v_str = v.strip()
+            if v_str == "*" or v_str == '"*"' or v_str == "'*'":
+                return ["*"]
+            if v_str.startswith("[") and v_str.endswith("]"):
                 import json
 
                 try:
-                    return json.loads(v)
+                    res = json.loads(v_str)
+                    if isinstance(res, list):
+                        return [str(x) for x in res]
                 except Exception:
                     pass
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
+            return [origin.strip() for origin in v_str.split(",") if origin.strip()]
+        if isinstance(v, list):
+            return [str(x) for x in v]
+        return ["*"]
 
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
