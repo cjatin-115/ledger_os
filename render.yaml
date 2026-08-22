@@ -25,6 +25,6 @@ services:
 databases:
   - name: ledgeros-db
     databaseName: ledgeros
-    user: postgres
+    user: ledgeros_user
     region: singapore
     plan: free
