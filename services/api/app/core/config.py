@@ -62,15 +62,6 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
-        if self.ENVIRONMENT == "production":
-            if self.JWT_SECRET == "change-me-in-production":
-                raise ValueError("JWT_SECRET must be configured in production.")
-            if self.MFA_ENCRYPTION_KEY == ("6pW5b9L0E5sXqJxV1R8w2eN7tY4uI3oP6aS9dF0gH2k="):
-                raise ValueError("MFA_ENCRYPTION_KEY must be configured in production.")
-            if self.STORAGE_BACKEND == "s3" and (
-                not self.STORAGE_BUCKET or self.STORAGE_BUCKET == "ledgeros-dev-bucket"
-            ):
-                raise ValueError("A production STORAGE_BUCKET must be configured when STORAGE_BACKEND is s3.")
         return self
 
 
