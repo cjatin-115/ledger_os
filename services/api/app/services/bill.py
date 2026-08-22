@@ -173,13 +173,17 @@ class BillService:
         due_before: date | None = None,
         due_after: date | None = None,
     ) -> list[Bill]:
-        return await self.repository.list(
+        bills = await self.repository.list(
             organization_id=organization_id,
             search=search,
             status=status,
             due_before=due_before,
             due_after=due_after,
         )
+        for bill in bills:
+            if hasattr(bill, "supplier") and bill.supplier:
+                bill.supplier_name = bill.supplier.name
+        return bills
 
     async def get(
         self,

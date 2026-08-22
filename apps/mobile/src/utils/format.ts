@@ -1,4 +1,5 @@
-export function formatMoney(value: string | number, compact = false): string {
+export function formatMoney(value: string | number | null | undefined, compact = false): string {
+  if (value === null || value === undefined) return '₹0';
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (Number.isNaN(num)) return '₹0';
 

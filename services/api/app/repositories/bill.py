@@ -94,6 +94,7 @@ class BillRepository:
             select(Bill)
             .options(
                 selectinload(Bill.items),
+                selectinload(Bill.supplier),
             )
             .where(
                 Bill.organization_id == organization_id,

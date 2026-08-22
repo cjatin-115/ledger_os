@@ -51,6 +51,7 @@ export interface Bill {
   id: string;
   organization_id: string;
   supplier_id: string;
+  supplier_name?: string | null;
   bill_number: string;
   bill_date: string;
   due_date: string | null;
@@ -128,6 +129,7 @@ export interface Payment {
   id: string;
   organization_id: string;
   supplier_id: string;
+  payee_payer_name?: string | null;
   amount: string;
   payment_method: string;
   payment_date: string;

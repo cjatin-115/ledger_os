@@ -201,6 +201,8 @@ class Bill(UUIDMixin, TimestampMixin, Base):
         nullable=True,
     )
 
+    supplier: Mapped["Supplier"] = relationship()
+
     items: Mapped[list["BillItem"]] = relationship(
         back_populates="bill",
         cascade="all, delete-orphan",

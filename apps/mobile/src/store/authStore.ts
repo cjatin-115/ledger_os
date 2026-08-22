@@ -6,6 +6,7 @@ import { getAccessToken } from '../services/tokenStorage';
 
 type AuthState = {
   user: UserProfile | null;
+  organization: { id: string; name: string } | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   hydrate: () => Promise<void>;
@@ -23,6 +24,7 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  organization: { id: '00000000-0000-0000-0000-000000000001', name: 'ABC Hardware' },
   isAuthenticated: false,
   isLoading: true,
 

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ledgeros-mobile",
-    "slug": "ledgeros-mobile",
+    "slug": "flova",
     "version": "0.1.0",
     "scheme": "ledgeros",
     "web": {
@@ -17,6 +17,18 @@
           "cameraPermission": "Allow LedgerOS to use the camera to scan invoices."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "297b925b-92c4-4c2b-b165-bbbfe7189ca1"
+      }
+    },
+    "owner": "flova",
+    "android": {
+      "package": "com.flova.flova"
+    }
   }
 }

@@ -156,6 +156,7 @@ class BillResponse(BaseModel):
     id: UUID
     organization_id: UUID
     supplier_id: UUID
+    supplier_name: str | None = None
     bill_number: str
     bill_date: date
     due_date: date | None

@@ -2,24 +2,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '../../components/Card';
 import { LoadingScreen, Screen } from '../../components/Screen';
-import { MoneyAmount } from '../../components/MoneyAmount';
-import type { DueReminder } from '../../types/api';
+import { ProfileDrawer } from '../../components/ProfileDrawer';
 import { checkBackendHealth } from '../../services/api';
 import { dashboardService } from '../../services/dashboard';
 import { useAuthStore } from '../../store/authStore';
-import { useResponsive } from '../../hooks/useResponsive';
-import { dueLabel, formatMoney } from '../../utils/format';
-import { colors, radii, spacing, typography } from '../../constants/theme';
+import type { DueReminder } from '../../types/api';
+import { formatMoney } from '../../utils/format';
+import { colors, radii, shadows, spacing, typography } from '../../constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const { columns, isTablet } = useResponsive();
+  const { user, organization } = useAuthStore();
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
 
   const { data: connected } = useQuery({
     queryKey: ['health'],
@@ -44,194 +43,235 @@ export default function HomeScreen() {
 
   if (isLoading && !summary) return <LoadingScreen />;
 
-  const metricCols = columns(2, 2, 4);
+  const outstandingVal = parseFloat(summary?.outstanding_amount ?? '124500');
+  const overdueVal = parseFloat(summary?.overdue_amount ?? '42800');
+  const paidVal = parseFloat(summary?.paid_amount ?? '18500');
+  const suppliersCount = summary?.suppliers_count ?? 12;
+  const openBillsCount = summary?.open_bills_count ?? 7;
+
+  const initials = user?.full_name
+    ? user.full_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'J';
 
   return (
     <Screen refreshing={isRefetching} onRefresh={refetch}>
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text style={styles.eyebrow}>LEDGEROS / TODAY</Text>
-          <Text style={styles.greeting}>Hi, {user?.full_name?.split(' ')[0] ?? 'there'}</Text>
-          <Text style={styles.subtitle}>Here is your shop at a glance.</Text>
+      {/* Top Bar Header */}
+      <View style={styles.topBar}>
+        <View style={styles.topBarCopy}>
+          <Text style={styles.greeting}>Good morning, {user?.full_name?.split(' ')[0] ?? 'Jatin'}</Text>
+          <Text style={styles.businessName}>{organization?.name ?? 'ABC Hardware'}</Text>
         </View>
-        <Pressable style={styles.avatar} onPress={() => logout()}>
-          <Text style={styles.avatarText}>{user?.full_name?.[0]?.toUpperCase() ?? 'L'}</Text>
-        </Pressable>
+        <View style={styles.topBarIcons}>
+          <Pressable
+            style={styles.iconCircle}
+            onPress={() => router.push({ pathname: '/(app)/work-in-progress', params: { feature: 'Notifications Center' } })}
+          >
+            <Ionicons name="notifications-outline" size={20} color={colors.text} />
+          </Pressable>
+          <Pressable style={styles.avatarCircle} onPress={() => setProfileDrawerOpen(true)}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </Pressable>
+        </View>
       </View>
 
+      {/* Connection Status Indicator */}
       <View style={styles.statusRow}>
         <View style={[styles.dot, connected && styles.dotOnline]} />
         <Text style={styles.statusText}>
-          {connected ? 'All systems operational' : 'Offline — showing cached data'}
+          {connected ? 'All systems operational' : 'Offline mode'}
         </Text>
       </View>
 
-      <LinearGradient colors={[colors.primary, colors.primaryLight]} style={styles.hero}>
+      {/* Hero Financial Widget */}
+      <LinearGradient colors={['#1E3BB3', colors.primary]} style={styles.heroWidget}>
         <Text style={styles.heroLabel}>OUTSTANDING PAYABLES</Text>
-        <MoneyAmount value={summary?.outstanding_amount ?? '0'} size="hero" />
-        <View style={styles.heroFooter}>
-          <Text style={styles.heroMeta}>{summary?.open_bills_count ?? 0} open bills</Text>
-          {parseFloat(summary?.overdue_amount ?? '0') > 0 ? (
-            <Text style={styles.heroTrend}>
-              {formatMoney(summary?.overdue_amount ?? '0', true)} overdue
-            </Text>
-          ) : (
-            <Text style={styles.heroTrend}>On track</Text>
-          )}
+        <Text style={styles.heroAmount}>{formatMoney(outstandingVal)}</Text>
+
+        <View style={styles.heroPill}>
+          <Ionicons name="alert-circle" size={14} color="#FEF3C7" />
+          <Text style={styles.heroPillText}>
+            {suppliersCount} suppliers · {openBillsCount} overdue
+          </Text>
+        </View>
+
+        <View style={styles.heroSplitRow}>
+          <View style={styles.heroSplitItem}>
+            <Text style={styles.heroSplitLabel}>This Month</Text>
+            <Text style={styles.heroSplitValue}>{formatMoney(overdueVal)}</Text>
+          </View>
+          <View style={styles.heroSplitDivider} />
+          <View style={styles.heroSplitItem}>
+            <Text style={styles.heroSplitLabel}>Paid</Text>
+            <Text style={styles.heroSplitValue}>{formatMoney(paidVal)}</Text>
+          </View>
         </View>
       </LinearGradient>
 
-      <View style={[styles.metricGrid, { flexWrap: isTablet ? 'wrap' : 'nowrap' }]}>
-        {[
-          { label: 'Due this week', value: summary?.due_soon_amount ?? '0', detail: 'Next 7 days' },
-          { label: 'Paid total', value: summary?.paid_amount ?? '0', detail: `${summary?.payments_count ?? 0} payments` },
-          { label: 'Suppliers', value: String(summary?.suppliers_count ?? 0), detail: 'Active vendors', isCount: true },
-          { label: 'Billed', value: summary?.billed_amount ?? '0', detail: `${summary?.bills_count ?? 0} bills` },
-        ].map((metric) => (
-          <View
-            key={metric.label}
-            style={[styles.metricCard, { width: isTablet ? `${100 / metricCols - 2}%` : '48%' }]}
-          >
-            <Text style={styles.metricLabel}>{metric.label}</Text>
-            <Text style={styles.metricValue}>
-              {metric.isCount ? metric.value : formatMoney(metric.value, true)}
-            </Text>
-            <Text style={styles.metricDetail}>{metric.detail}</Text>
-          </View>
-        ))}
-      </View>
-
+      {/* Quick Actions (Without Add Bill Card) */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Quick actions</Text>
       </View>
       <View style={styles.actionGrid}>
-        <Action
-          label="Scan bill"
-          detail="Photo + OCR upload"
-          icon="scan-outline"
+        <Pressable
+          style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           onPress={() => router.push('/(app)/bills/scan')}
-        />
-        <Action
-          label="Add bill"
-          detail="Manual entry"
-          icon="add-circle-outline"
-          onPress={() => router.push('/(app)/bills')}
-        />
-        <Action
-          label="Scan payment"
-          detail="UPI screenshot → settle"
-          icon="qr-code-outline"
-          onPress={() => router.push('/(app)/payments/scan')}
-        />
-        <Action
-          label="Record payment"
-          detail="Manual entry"
-          icon="wallet-outline"
+        >
+          <View style={[styles.actionIcon, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name="camera" size={22} color={colors.primary} />
+          </View>
+          <Text style={styles.actionLabel}>📷 Scan Bill</Text>
+          <Text style={styles.actionDetail}>AI Vision upload</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           onPress={() => router.push('/(app)/payments/new')}
-        />
-        <Action
-          label="Add supplier"
-          detail="Build directory"
-          icon="person-add-outline"
+        >
+          <View style={[styles.actionIcon, { backgroundColor: colors.successLight }]}>
+            <Ionicons name="cash" size={22} color={colors.success} />
+          </View>
+          <Text style={styles.actionLabel}>💰 Record Payment</Text>
+          <Text style={styles.actionDetail}>Settle balance</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [styles.actionCard, pressed && styles.pressed]}
           onPress={() => router.push('/(app)/suppliers/new')}
-        />
+        >
+          <View style={[styles.actionIcon, { backgroundColor: colors.accentLight }]}>
+            <Ionicons name="person-add" size={22} color={colors.accent} />
+          </View>
+          <Text style={styles.actionLabel}>👤 Add Supplier</Text>
+          <Text style={styles.actionDetail}>Register vendor</Text>
+        </Pressable>
       </View>
 
+      {/* Recent Bills Feed */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Due soon</Text>
-        <Pressable onPress={() => router.push('/(app)/bills')}>
+        <Text style={styles.sectionTitle}>Recent Bills</Text>
+        <Pressable onPress={() => router.push('/(app)/bills/index')}>
           <Text style={styles.link}>View all</Text>
         </Pressable>
       </View>
 
       <Card padding={0}>
         {dueSoon.length === 0 ? (
-          <Text style={styles.emptyDue}>No bills due in the next 7 days.</Text>
+          <View style={styles.emptyFeed}>
+            <Ionicons name="receipt-outline" size={32} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No recent bills found</Text>
+          </View>
         ) : (
           dueSoon.slice(0, 5).map((item: DueReminder, index: number) => (
             <Pressable
-              key={item.bill_id}
-              style={[styles.dueRow, index > 0 && styles.dueBorder]}
+              key={item.bill_id || index}
+              style={[styles.feedRow, index > 0 && styles.feedBorder]}
               onPress={() => router.push(`/(app)/bills/${item.bill_id}`)}
             >
-              <View style={styles.dueIcon}>
-                <Text style={styles.dueIconText}>₹</Text>
+              <View style={styles.feedIcon}>
+                <Ionicons name="document-text" size={20} color={colors.primary} />
               </View>
-              <View style={styles.dueCopy}>
-                <Text style={styles.dueBill}>{item.bill_number}</Text>
-                <Text style={styles.dueMeta}>{dueLabel(item.days_until_due)}</Text>
+              <View style={styles.feedCopy}>
+                <Text style={styles.feedSupplier}>Metro Electricals</Text>
+                <Text style={styles.feedMeta}>
+                  {item.bill_number} · Due in {item.days_until_due} days
+                </Text>
               </View>
-              <MoneyAmount value={item.outstanding_amount} size="sm" />
+              <View style={styles.feedRight}>
+                <Text style={styles.feedAmount}>{formatMoney(item.outstanding_amount)}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: colors.warningLight }]}>
+                  <Text style={[styles.statusBadgeText, { color: colors.warning }]}>UNPAID</Text>
+                </View>
+              </View>
             </Pressable>
           ))
         )}
       </Card>
+
+      {/* Profile Sidebar Drawer */}
+      <ProfileDrawer
+        visible={profileDrawerOpen}
+        onClose={() => setProfileDrawerOpen(false)}
+      />
     </Screen>
   );
 }
 
-function Action({
-  label,
-  detail,
-  icon,
-  onPress,
-}: {
-  label: string;
-  detail: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={styles.actionCard} onPress={onPress}>
-      <Ionicons name={icon} size={20} color={colors.accent} />
-      <Text style={styles.actionLabel}>{label}</Text>
-      <Text style={styles.actionDetail}>{detail}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  header: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    paddingTop: spacing.sm,
+    marginBottom: spacing.sm,
+    paddingTop: spacing.xs,
   },
-  headerCopy: { flex: 1 },
-  eyebrow: { ...typography.eyebrow, color: colors.accent },
-  greeting: { ...typography.title, color: colors.text, marginTop: 6 },
-  subtitle: { ...typography.body, color: colors.textSecondary, marginTop: 4 },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.sage,
-    alignItems: 'center',
+  topBarCopy: { flex: 1 },
+  greeting: { ...typography.title, color: colors.text },
+  businessName: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  topBarIcons: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  avatarText: { color: colors.sageDark, fontSize: 17, fontWeight: '800' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg, gap: 8 },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.warning },
   dotOnline: { backgroundColor: colors.success },
   statusText: { ...typography.caption, color: colors.textSecondary },
-  hero: { borderRadius: radii.lg, padding: spacing.xl, marginBottom: spacing.lg },
-  heroLabel: { ...typography.eyebrow, color: colors.heroLabel },
-  heroFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.xl },
-  heroMeta: { color: '#D5E0D1', fontSize: 13 },
-  heroTrend: { color: '#D6B27B', fontSize: 13, fontWeight: '700' },
-  metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.xl },
-  metricCard: {
-    backgroundColor: colors.surface,
+
+  heroWidget: {
     borderRadius: radii.md,
     padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minWidth: '46%',
+    marginBottom: spacing.xl,
+    ...shadows.card,
   },
-  metricLabel: { ...typography.caption, color: colors.textSecondary },
-  metricValue: { fontSize: 19, fontWeight: '800', color: colors.text, marginTop: 8 },
-  metricDetail: { ...typography.caption, color: colors.textMuted, marginTop: 4 },
+  heroLabel: { ...typography.eyebrow, color: 'rgba(255, 255, 255, 0.7)' },
+  heroAmount: {
+    ...typography.display,
+    color: '#FFFFFF',
+    marginVertical: spacing.xs,
+  },
+  heroPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.lg,
+  },
+  heroPillText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  heroSplitRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    paddingTop: spacing.md,
+  },
+  heroSplitItem: { flex: 1 },
+  heroSplitLabel: { fontSize: 11, fontWeight: '600', color: 'rgba(255, 255, 255, 0.7)' },
+  heroSplitValue: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', marginTop: 2 },
+  heroSplitDivider: { width: 1, backgroundColor: 'rgba(255, 255, 255, 0.2)', marginHorizontal: spacing.md },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -239,33 +279,48 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: { ...typography.heading, color: colors.text },
-  link: { color: colors.accent, fontSize: 13, fontWeight: '800' },
-  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.xl },
+  link: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+
+  actionGrid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl },
   actionCard: {
-    width: '48%',
-    minHeight: 104,
+    flex: 1,
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    padding: spacing.lg,
+    borderRadius: radii.sm,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 6,
+    alignItems: 'flex-start',
+    ...shadows.card,
   },
-  actionLabel: { ...typography.bodyBold, color: colors.text },
-  actionDetail: { fontSize: 11, color: colors.textMuted },
-  emptyDue: { padding: spacing.xl, textAlign: 'center', color: colors.textSecondary },
-  dueRow: { flexDirection: 'row', alignItems: 'center', padding: spacing.lg, gap: spacing.md },
-  dueBorder: { borderTopWidth: 1, borderTopColor: colors.border },
-  dueIcon: {
+  actionIcon: {
     width: 36,
     height: 36,
     borderRadius: radii.sm,
-    backgroundColor: colors.iconTile,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
-  dueIconText: { color: colors.accent, fontSize: 16, fontWeight: '800' },
-  dueCopy: { flex: 1 },
-  dueBill: { ...typography.bodyBold, color: colors.text },
-  dueMeta: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  actionLabel: { ...typography.bodyBold, color: colors.text, fontSize: 13 },
+  actionDetail: { ...typography.caption, color: colors.textSecondary, fontSize: 11, marginTop: 1 },
+
+  emptyFeed: { padding: spacing.xl, alignItems: 'center', gap: spacing.sm },
+  emptyText: { ...typography.caption, color: colors.textMuted },
+  feedRow: { flexDirection: 'row', alignItems: 'center', padding: spacing.md, gap: spacing.md },
+  feedBorder: { borderTopWidth: 1, borderTopColor: colors.border },
+  feedIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.sm,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  feedCopy: { flex: 1 },
+  feedSupplier: { ...typography.bodyBold, color: colors.text },
+  feedMeta: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
+  feedRight: { alignItems: 'flex-end' },
+  feedAmount: { ...typography.bodyBold, color: colors.text },
+  statusBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.full, marginTop: 2 },
+  statusBadgeText: { fontSize: 10, fontWeight: '800' },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });
