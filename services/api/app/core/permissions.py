@@ -1,0 +1,17 @@
+PERMISSION_CATALOG = {
+    "auth.me": ("View current user profile", "auth"),
+    "suppliers.read": ("View suppliers", "suppliers"),
+    "suppliers.write": ("Create and update suppliers", "suppliers"),
+    "bills.read": ("View bills", "bills"),
+    "bills.write": ("Create bills", "bills"),
+    "bills.post": ("Post bills to the ledger", "bills"),
+    "payments.read": ("View payments", "payments"),
+    "payments.write": ("Create and allocate payments", "payments"),
+    "ledger.read": ("View ledger transactions", "ledger"),
+    "ledger.reconcile": ("Reconcile ledger transactions", "ledger"),
+    "attachments.read": ("View attachments", "attachments"),
+    "attachments.write": ("Upload attachments", "attachments"),
+    "dashboard.read": ("View dashboard metrics", "dashboard"),
+    "users.manage": ("Manage organization users", "users"),
+    "roles.manage": ("Manage organization roles", "roles"),
+}

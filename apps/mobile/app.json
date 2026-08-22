@@ -1,4 +1,22 @@
 {
-  "name": "ledgeros-mobile",
-  "displayName": "LedgerOS"
+  "expo": {
+    "name": "ledgeros-mobile",
+    "slug": "ledgeros-mobile",
+    "version": "0.1.0",
+    "scheme": "ledgeros",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow LedgerOS to access your photos to attach bill images.",
+          "cameraPermission": "Allow LedgerOS to use the camera to scan invoices."
+        }
+      ]
+    ]
+  }
 }

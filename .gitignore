@@ -1,3 +1,10 @@
-__pycache__/
-node_modules/
 .env
+__pycache__
+.venv
+node_modules
+.expo
+dist
+build
+*.log
+*.pyc
+.pytest_cache/

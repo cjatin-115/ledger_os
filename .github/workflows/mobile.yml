@@ -1,0 +1,43 @@
+name: Mobile CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    branches: [ main, master, develop ]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile.yml'
+
+jobs:
+  mobile-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier Check
+        run: npm run format
+
+      - name: Run TypeScript Check
+        run: npm run typecheck
