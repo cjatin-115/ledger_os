@@ -65,12 +65,8 @@ class PaymentService:
             amount=payload.amount,
             payment_method=payment_method_enum,
             payment_date=payload.payment_date,
-            reference_number=(
-                payload.reference_number.strip() if payload.reference_number else None
-            ),
-            cheque_number=(
-                payload.cheque_number.strip() if payload.cheque_number else None
-            ),
+            reference_number=(payload.reference_number.strip() if payload.reference_number else None),
+            cheque_number=(payload.cheque_number.strip() if payload.cheque_number else None),
             cheque_date=payload.cheque_date,
             bank_name=(payload.bank_name.strip() if payload.bank_name else None),
             status=PaymentStatus.RECORDED,
@@ -151,10 +147,8 @@ class PaymentService:
         if payload.amount > payment_remaining:
             raise ValueError("Allocation exceeds the remaining payment amount.")
 
-        allocated_to_bill = (
-            await self.allocation_repository.get_total_allocated_to_bill(
-                bill_id=bill.id,
-            )
+        allocated_to_bill = await self.allocation_repository.get_total_allocated_to_bill(
+            bill_id=bill.id,
         )
 
         bill_outstanding = Decimal(bill.total_amount) - Decimal(allocated_to_bill)

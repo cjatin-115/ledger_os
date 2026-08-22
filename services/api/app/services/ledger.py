@@ -34,10 +34,7 @@ class LedgerService:
                 AccountTransaction.created_at.desc(),
             )
         )
-        return [
-            LedgerTransactionResponse.model_validate(transaction)
-            for transaction in result.scalars().all()
-        ]
+        return [LedgerTransactionResponse.model_validate(transaction) for transaction in result.scalars().all()]
 
     async def reconcile(
         self,

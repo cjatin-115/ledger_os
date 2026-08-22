@@ -25,13 +25,9 @@ class OrganizationSubscription(UUIDMixin, TimestampMixin, Base):
         ForeignKey("subscription_plans.id"),
         nullable=False,
     )
-    status: Mapped[str] = mapped_column(
-        String(30), nullable=False, default="active", server_default="active"
-    )
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="active", server_default="active")
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    ends_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     organization: Mapped["Organization"] = relationship()
     plan: Mapped["SubscriptionPlan"] = relationship()

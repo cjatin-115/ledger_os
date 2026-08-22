@@ -24,11 +24,7 @@ class OrganizationAdminService:
     async def list_roles(self, organization_id: UUID) -> list[RoleResponse]:
         result = await self.db.execute(
             select(Role)
-            .options(
-                selectinload(Role.role_permissions).selectinload(
-                    RolePermission.permission
-                )
-            )
+            .options(selectinload(Role.role_permissions).selectinload(RolePermission.permission))
             .where(Role.organization_id == organization_id)
             .order_by(Role.name)
         )
@@ -67,9 +63,7 @@ class OrganizationAdminService:
 
     async def list_users(self, organization_id: UUID) -> list[UserResponse]:
         result = await self.db.execute(
-            select(User)
-            .where(User.organization_id == organization_id)
-            .order_by(User.full_name)
+            select(User).where(User.organization_id == organization_id).order_by(User.full_name)
         )
         return [UserResponse.model_validate(user) for user in result.scalars()]
 
@@ -117,18 +111,11 @@ class OrganizationAdminService:
     ) -> None:
         if not permission_codes:
             return
-        result = await self.db.execute(
-            select(Permission).where(Permission.code.in_(permission_codes))
-        )
+        result = await self.db.execute(select(Permission).where(Permission.code.in_(permission_codes)))
         permissions = list(result.scalars().all())
         if len(permissions) != len(set(permission_codes)):
             raise ValueError("One or more permissions do not exist.")
-        self.db.add_all(
-            [
-                RolePermission(role_id=role.id, permission_id=permission.id)
-                for permission in permissions
-            ]
-        )
+        self.db.add_all([RolePermission(role_id=role.id, permission_id=permission.id) for permission in permissions])
 
     async def _get_role_response(
         self,
@@ -137,11 +124,7 @@ class OrganizationAdminService:
     ) -> RoleResponse:
         role = await self.db.scalar(
             select(Role)
-            .options(
-                selectinload(Role.role_permissions).selectinload(
-                    RolePermission.permission
-                )
-            )
+            .options(selectinload(Role.role_permissions).selectinload(RolePermission.permission))
             .where(
                 Role.id == role_id,
                 Role.organization_id == organization_id,
@@ -159,7 +142,5 @@ class OrganizationAdminService:
             name=role.name,
             description=role.description,
             is_active=role.is_active,
-            permission_codes=sorted(
-                link.permission.code for link in role.role_permissions
-            ),
+            permission_codes=sorted(link.permission.code for link in role.role_permissions),
         )

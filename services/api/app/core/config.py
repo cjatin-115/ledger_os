@@ -11,9 +11,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
 
-    DATABASE_URL: str = (
-        "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/ledgeros"
-    )
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/ledgeros"
     JWT_SECRET: str = "change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
@@ -53,6 +51,7 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             if v.startswith("[") and v.endswith("]"):
                 import json
+
                 try:
                     return json.loads(v)
                 except Exception:
@@ -65,9 +64,7 @@ class Settings(BaseSettings):
         if self.ENVIRONMENT == "production":
             if self.JWT_SECRET == "change-me-in-production":
                 raise ValueError("JWT_SECRET must be configured in production.")
-            if self.MFA_ENCRYPTION_KEY == (
-                "6pW5b9L0E5sXqJxV1R8w2eN7tY4uI3oP6aS9dF0gH2k="
-            ):
+            if self.MFA_ENCRYPTION_KEY == ("6pW5b9L0E5sXqJxV1R8w2eN7tY4uI3oP6aS9dF0gH2k="):
                 raise ValueError("MFA_ENCRYPTION_KEY must be configured in production.")
             if self.STORAGE_BACKEND != "s3":
                 raise ValueError("STORAGE_BACKEND must be s3 in production.")

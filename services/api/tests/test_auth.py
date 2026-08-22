@@ -43,9 +43,7 @@ async def test_register_creates_organization_and_user(client):
     assert data["role_name"] == "OWNER"
 
     async with TestSessionLocal() as db:
-        permission_result = await db.execute(
-            select(Permission).where(Permission.code == "bills.read")
-        )
+        permission_result = await db.execute(select(Permission).where(Permission.code == "bills.read"))
         assert permission_result.scalar_one_or_none() is not None
 
     async with TestSessionLocal() as db:
@@ -90,9 +88,7 @@ async def test_login_returns_access_token(client):
                 )
             )
 
-        starter_plan = await db.scalar(
-            select(SubscriptionPlan).where(SubscriptionPlan.code == "starter")
-        )
+        starter_plan = await db.scalar(select(SubscriptionPlan).where(SubscriptionPlan.code == "starter"))
         if starter_plan is None:
             starter_plan = SubscriptionPlan(
                 code="starter",
@@ -104,9 +100,7 @@ async def test_login_returns_access_token(client):
             await db.flush()
 
         existing_subscription = await db.scalar(
-            select(OrganizationSubscription).where(
-                OrganizationSubscription.organization_id == org_id
-            )
+            select(OrganizationSubscription).where(OrganizationSubscription.organization_id == org_id)
         )
         if existing_subscription is None:
             db.add(
@@ -118,9 +112,7 @@ async def test_login_returns_access_token(client):
                 )
             )
 
-        existing_permission = await db.execute(
-            select(Permission).where(Permission.code == "auth.me")
-        )
+        existing_permission = await db.execute(select(Permission).where(Permission.code == "auth.me"))
         permission_record = existing_permission.scalar_one_or_none()
         if permission_record is None:
             permission_record = Permission(
@@ -133,9 +125,7 @@ async def test_login_returns_access_token(client):
             await db.flush()
 
         for permission_code in PERMISSION_CATALOG:
-            permission_result = await db.execute(
-                select(Permission).where(Permission.code == permission_code)
-            )
+            permission_result = await db.execute(select(Permission).where(Permission.code == permission_code))
             catalog_permission = permission_result.scalar_one_or_none()
             if catalog_permission is None:
                 description, category = PERMISSION_CATALOG[permission_code]
@@ -258,9 +248,7 @@ async def test_login_locks_account_after_repeated_failures(client):
 @pytest.mark.asyncio
 async def test_route_permission_is_enforced(client):
     async with TestSessionLocal() as db:
-        permission_result = await db.execute(
-            select(Permission.id).where(Permission.code == "bills.read")
-        )
+        permission_result = await db.execute(select(Permission.id).where(Permission.code == "bills.read"))
         permission_id = permission_result.scalar_one()
         await db.execute(
             delete(RolePermission).where(
@@ -436,7 +424,10 @@ async def test_otp_send_and_verify(client):
 async def test_google_login(client):
     response = await client.post(
         "/api/v1/auth/google",
-        json={"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imdvb2dsZV91c2VyQGxlZGdlcm9zLmxvY2FsIn0.signature", "organization_name": "Google Shop"},
+        json={
+            "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imdvb2dsZV91c2VyQGxlZGdlcm9zLmxvY2FsIn0.signature",
+            "organization_name": "Google Shop",
+        },
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()

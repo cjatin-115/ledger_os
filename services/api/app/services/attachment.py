@@ -123,7 +123,4 @@ class AttachmentService:
             )
             .order_by(Attachment.created_at.desc())
         )
-        return [
-            AttachmentResponse.model_validate(attachment)
-            for attachment in result.scalars().all()
-        ]
+        return [AttachmentResponse.model_validate(attachment) for attachment in result.scalars().all()]

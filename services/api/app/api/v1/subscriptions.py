@@ -22,13 +22,9 @@ async def list_plans(
     db: AsyncSession = Depends(get_db),
 ) -> list[SubscriptionPlanResponse]:
     result = await db.execute(
-        select(SubscriptionPlan)
-        .where(SubscriptionPlan.is_active.is_(True))
-        .order_by(SubscriptionPlan.price_per_device)
+        select(SubscriptionPlan).where(SubscriptionPlan.is_active.is_(True)).order_by(SubscriptionPlan.price_per_device)
     )
-    return [
-        SubscriptionPlanResponse.model_validate(plan) for plan in result.scalars().all()
-    ]
+    return [SubscriptionPlanResponse.model_validate(plan) for plan in result.scalars().all()]
 
 
 @router.get("/current", response_model=SubscriptionResponse)

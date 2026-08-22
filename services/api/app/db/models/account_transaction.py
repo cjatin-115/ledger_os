@@ -64,8 +64,7 @@ class AccountTransaction(UUIDMixin, CreatedAtMixin, Base):
             name="ck_account_transactions_credit_non_negative",
         ),
         CheckConstraint(
-            "(debit_amount > 0 AND credit_amount = 0) "
-            "OR (debit_amount = 0 AND credit_amount > 0)",
+            "(debit_amount > 0 AND credit_amount = 0) OR (debit_amount = 0 AND credit_amount > 0)",
             name="ck_account_transactions_one_sided",
         ),
     )

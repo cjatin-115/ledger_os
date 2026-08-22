@@ -30,9 +30,7 @@ class ReminderService:
         result = await self.db.execute(
             select(
                 Bill,
-                (
-                    Bill.total_amount - func.coalesce(allocation_totals.c.allocated, 0)
-                ).label("outstanding"),
+                (Bill.total_amount - func.coalesce(allocation_totals.c.allocated, 0)).label("outstanding"),
             )
             .outerjoin(
                 allocation_totals,
@@ -43,8 +41,7 @@ class ReminderService:
                 Bill.status.not_in([BillStatus.CANCELLED, BillStatus.PAID]),
                 Bill.due_date.is_not(None),
                 Bill.due_date <= date.fromordinal(today.toordinal() + days),
-                (Bill.total_amount - func.coalesce(allocation_totals.c.allocated, 0))
-                > 0,
+                (Bill.total_amount - func.coalesce(allocation_totals.c.allocated, 0)) > 0,
             )
             .order_by(Bill.due_date)
         )

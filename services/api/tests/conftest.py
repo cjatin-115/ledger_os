@@ -73,9 +73,7 @@ async def override_get_current_user() -> User:
 
 
 app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[get_current_organization_id] = (
-    override_get_current_organization_id
-)
+app.dependency_overrides[get_current_organization_id] = override_get_current_organization_id
 app.dependency_overrides[get_current_user] = override_get_current_user
 
 
@@ -108,13 +106,8 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
             db.add(role)
             await db.flush()
 
-        permission_result = await db.execute(
-            select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys()))
-        )
-        permissions = {
-            permission.code: permission
-            for permission in permission_result.scalars().all()
-        }
+        permission_result = await db.execute(select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys())))
+        permissions = {permission.code: permission for permission in permission_result.scalars().all()}
         for code, (description, category) in PERMISSION_CATALOG.items():
             permission = permissions.get(code)
             if permission is None:
@@ -189,30 +182,18 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         await db.execute(
             delete(PaymentAllocation).where(
                 PaymentAllocation.payment_id.in_(
-                    select(Payment.id).where(
-                        Payment.organization_id == TEST_ORGANIZATION_ID
-                    )
+                    select(Payment.id).where(Payment.organization_id == TEST_ORGANIZATION_ID)
                 )
             )
         )
 
-        await db.execute(
-            delete(AccountTransaction).where(
-                AccountTransaction.organization_id == TEST_ORGANIZATION_ID
-            )
-        )
+        await db.execute(delete(AccountTransaction).where(AccountTransaction.organization_id == TEST_ORGANIZATION_ID))
 
-        await db.execute(
-            delete(Payment).where(Payment.organization_id == TEST_ORGANIZATION_ID)
-        )
+        await db.execute(delete(Payment).where(Payment.organization_id == TEST_ORGANIZATION_ID))
 
-        await db.execute(
-            delete(Bill).where(Bill.organization_id == TEST_ORGANIZATION_ID)
-        )
+        await db.execute(delete(Bill).where(Bill.organization_id == TEST_ORGANIZATION_ID))
 
-        await db.execute(
-            delete(Supplier).where(Supplier.organization_id == TEST_ORGANIZATION_ID)
-        )
+        await db.execute(delete(Supplier).where(Supplier.organization_id == TEST_ORGANIZATION_ID))
 
         await db.commit()
 

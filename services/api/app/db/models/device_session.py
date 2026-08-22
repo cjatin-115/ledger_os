@@ -19,20 +19,12 @@ class DeviceSession(UUIDMixin, TimestampMixin, Base):
         Index("ix_device_sessions_device_id", "user_id", "device_id"),
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     device_id: Mapped[str] = mapped_column(String(255), nullable=False)
     device_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     last_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    last_seen_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True, server_default="true"
-    )
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
 
     user: Mapped["User"] = relationship()

@@ -120,9 +120,7 @@ class BillCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_calculations(self) -> "BillCreate":
-        expected_total = (
-            self.taxable_amount + self.cgst_amount + self.sgst_amount + self.igst_amount
-        )
+        expected_total = self.taxable_amount + self.cgst_amount + self.sgst_amount + self.igst_amount
         if abs(expected_total - self.total_amount) > Decimal("1.00"):
             raise ValueError("Total amount does not match taxes and taxable amount.")
         return self

@@ -28,11 +28,7 @@ def _normalize_extracted_payload(payload: dict) -> dict:
         "igst_amount",
         "total_amount",
     ):
-        payload[field] = (
-            _money_str(Decimal(str(payload[field])))
-            if payload.get(field) is not None
-            else None
-        )
+        payload[field] = _money_str(Decimal(str(payload[field]))) if payload.get(field) is not None else None
 
     for item in payload.get("items", []):
         for field in (
@@ -44,11 +40,7 @@ def _normalize_extracted_payload(payload: dict) -> dict:
             "line_total",
         ):
             if item.get(field) is not None:
-                item[field] = (
-                    _money_str(Decimal(str(item[field])))
-                    if field != "quantity"
-                    else str(item[field])
-                )
+                item[field] = _money_str(Decimal(str(item[field]))) if field != "quantity" else str(item[field])
 
     if payload.get("confidence") is not None:
         payload["confidence"] = float(payload["confidence"])

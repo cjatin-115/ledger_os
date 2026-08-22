@@ -33,9 +33,7 @@ class LoginRequest(BaseModel):
             if value
         ]
         if len(identifiers) != 1:
-            raise ValueError(
-                "Provide exactly one of identifier, email, or phone_number."
-            )
+            raise ValueError("Provide exactly one of identifier, email, or phone_number.")
         return self
 
     def login_identifier(self) -> str:

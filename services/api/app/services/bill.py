@@ -56,9 +56,7 @@ class BillService:
         )
 
         if existing_bill is not None:
-            raise ValueError(
-                "A bill with this number already exists for this supplier."
-            )
+            raise ValueError("A bill with this number already exists for this supplier.")
 
         for candidate in await self.repository.list_for_supplier(
             organization_id,
@@ -72,8 +70,7 @@ class BillService:
             if (
                 number_similarity >= 0.92
                 and candidate.bill_date == payload.bill_date
-                and abs(candidate.total_amount - payload.total_amount)
-                <= Decimal("0.01")
+                and abs(candidate.total_amount - payload.total_amount) <= Decimal("0.01")
             ):
                 raise ValueError("A likely duplicate bill already exists.")
 
@@ -110,9 +107,7 @@ class BillService:
                     tax_rate=item_payload.tax_rate,
                     tax_amount=item_payload.tax_amount,
                     line_total=item_payload.line_total,
-                    hsn_code=(
-                        item_payload.hsn_code.strip() if item_payload.hsn_code else None
-                    ),
+                    hsn_code=(item_payload.hsn_code.strip() if item_payload.hsn_code else None),
                 )
             )
 

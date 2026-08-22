@@ -75,15 +75,11 @@ class AuthService:
             raise ValueError("Password must be at least 8 characters long.")
 
         if email:
-            existing_user = await self.db.execute(
-                select(User).where(User.email == email)
-            )
+            existing_user = await self.db.execute(select(User).where(User.email == email))
             if existing_user.scalar_one_or_none() is not None:
                 raise ValueError("A user with this email already exists.")
 
-        existing_phone = await self.db.execute(
-            select(User.id).where(User.phone_number == phone_number).limit(1)
-        )
+        existing_phone = await self.db.execute(select(User.id).where(User.phone_number == phone_number).limit(1))
         if existing_phone.scalar_one_or_none() is not None:
             raise ValueError("A user with this phone number already exists.")
 
@@ -96,9 +92,7 @@ class AuthService:
         self.db.add(organization)
         await self.db.flush()
 
-        trial_plan = await self.db.scalar(
-            select(SubscriptionPlan).where(SubscriptionPlan.code == "free_trial")
-        )
+        trial_plan = await self.db.scalar(select(SubscriptionPlan).where(SubscriptionPlan.code == "free_trial"))
         if trial_plan is None:
             trial_plan = SubscriptionPlan(
                 code="free_trial",
@@ -134,10 +128,7 @@ class AuthService:
         permission_result = await self.db.execute(
             select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys()))
         )
-        permissions = {
-            permission.code: permission
-            for permission in permission_result.scalars().all()
-        }
+        permissions = {permission.code: permission for permission in permission_result.scalars().all()}
         for code, (description, category) in PERMISSION_CATALOG.items():
             permission_record = permissions.get(code)
             if permission_record is None:
@@ -262,11 +253,7 @@ class AuthService:
             if not otp:
                 raise ValueError("Multi-factor authentication code required.")
             try:
-                secret = (
-                    self._fernet()
-                    .decrypt(user.mfa_secret.encode("utf-8"))
-                    .decode("utf-8")
-                )
+                secret = self._fernet().decrypt(user.mfa_secret.encode("utf-8")).decode("utf-8")
             except Exception as exc:
                 raise ValueError("Multi-factor authentication is unavailable.") from exc
             if not pyotp.TOTP(secret).verify(otp, valid_window=1):
@@ -298,11 +285,7 @@ class AuthService:
             "org_id": str(user.organization_id),
             "role_id": str(user.role_id),
             "iat": int(now.timestamp()),
-            "exp": int(
-                (
-                    now + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
-                ).timestamp()
-            ),
+            "exp": int((now + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp()),
         }
         if device_session_id is not None:
             payload["sid"] = str(device_session_id)
@@ -334,8 +317,7 @@ class AuthService:
                 OrganizationSubscription.organization_id == user.organization_id,
                 OrganizationSubscription.status == "active",
                 OrganizationSubscription.starts_at <= now,
-                (OrganizationSubscription.ends_at.is_(None))
-                | (OrganizationSubscription.ends_at > now),
+                (OrganizationSubscription.ends_at.is_(None)) | (OrganizationSubscription.ends_at > now),
             )
             .with_for_update()
         )
@@ -362,9 +344,7 @@ class AuthService:
                 )
             )
             if int(active_count or 0) >= subscription.plan.max_devices:
-                raise ValueError(
-                    f"Device limit reached for the {subscription.plan.name} plan."
-                )
+                raise ValueError(f"Device limit reached for the {subscription.plan.name} plan.")
             session = DeviceSession(
                 user_id=user.id,
                 device_id=device_id,
@@ -396,16 +376,10 @@ class AuthService:
         now = datetime.now(UTC)
         token_hash = self.hash_refresh_token(payload.refresh_token)
         result = await self.db.execute(
-            select(RefreshToken)
-            .where(RefreshToken.token_hash == token_hash)
-            .with_for_update()
+            select(RefreshToken).where(RefreshToken.token_hash == token_hash).with_for_update()
         )
         refresh_record = result.scalar_one_or_none()
-        if (
-            refresh_record is None
-            or refresh_record.revoked_at is not None
-            or refresh_record.expires_at <= now
-        ):
+        if refresh_record is None or refresh_record.revoked_at is not None or refresh_record.expires_at <= now:
             raise ValueError("Invalid or expired refresh token.")
 
         user = await self.db.get(User, refresh_record.user_id)
@@ -457,15 +431,12 @@ class AuthService:
                 PasswordResetToken(
                     user_id=user.id,
                     token_hash=self.hash_refresh_token(reset_token),
-                    expires_at=datetime.now(UTC)
-                    + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES),
+                    expires_at=datetime.now(UTC) + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES),
                 )
             )
             await self.db.commit()
 
-        response = PasswordResetResponse(
-            message="If the account exists, reset instructions have been sent."
-        )
+        response = PasswordResetResponse(message="If the account exists, reset instructions have been sent.")
         if settings.ENVIRONMENT != "production":
             response.reset_token = reset_token
         return response
@@ -486,11 +457,7 @@ class AuthService:
             .with_for_update()
         )
         reset_record = result.scalar_one_or_none()
-        if (
-            reset_record is None
-            or reset_record.used_at is not None
-            or reset_record.expires_at <= now
-        ):
+        if reset_record is None or reset_record.used_at is not None or reset_record.expires_at <= now:
             raise ValueError("Invalid or expired password reset token.")
 
         user = await self.db.get(User, reset_record.user_id)
@@ -619,9 +586,7 @@ class AuthService:
             return True
         return False
 
-    async def google_login(
-        self, id_token: str, organization_name: str | None = None
-    ) -> TokenResponse:
+    async def google_login(self, id_token: str, organization_name: str | None = None) -> TokenResponse:
         # Decode or mock email from Google ID token
         email = f"google_user_{secrets.token_hex(4)}@ledgeros.co"
         full_name = "Google User"

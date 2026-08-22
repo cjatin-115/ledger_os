@@ -19,9 +19,7 @@ class BillExtractionService:
     async def extract_from_text(self, raw_text: str) -> ExtractedBill:
         return extract_bill_from_text(raw_text)
 
-    async def extract_from_image(
-        self, image_bytes: bytes, mime_type: str = "image/jpeg"
-    ) -> ExtractedBill:
+    async def extract_from_image(self, image_bytes: bytes, mime_type: str = "image/jpeg") -> ExtractedBill:
         return extract_bill_from_image(image_bytes, mime_type)
 
     async def confirm_extracted_bill(
@@ -47,20 +45,14 @@ class BillExtractionService:
             supplier = Supplier(
                 organization_id=organization_id,
                 name=payload.supplier_name.strip(),
-                gstin=(
-                    payload.supplier_gstin.strip().upper()
-                    if payload.supplier_gstin
-                    else None
-                ),
+                gstin=(payload.supplier_gstin.strip().upper() if payload.supplier_gstin else None),
                 is_active=True,
             )
             supplier = await supplier_repo.create(supplier)
             created_supplier = True
 
         if supplier is None:
-            raise ValueError(
-                "Supplier could not be resolved from the extracted invoice data."
-            )
+            raise ValueError("Supplier could not be resolved from the extracted invoice data.")
 
         items: list[BillItemCreate] = []
         for item in payload.items:
@@ -91,9 +83,7 @@ class BillExtractionService:
             if subtotal > Decimal("0.00"):
                 taxable_amount = subtotal - discount_amount
             elif total_amount > Decimal("0.00"):
-                taxable_amount = total_amount - (
-                    cgst_amount + sgst_amount + igst_amount
-                )
+                taxable_amount = total_amount - (cgst_amount + sgst_amount + igst_amount)
 
         if total_amount == Decimal("0.00"):
             total_amount = taxable_amount + cgst_amount + sgst_amount + igst_amount

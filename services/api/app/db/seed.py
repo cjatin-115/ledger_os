@@ -33,15 +33,11 @@ DEMO_EMAIL = "demo@ledgeros.local"
 async def seed_development_data(db: AsyncSession) -> None:
     """Create deterministic local development records with a login-ready demo account."""
 
-    permission_result = await db.execute(
-        select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys()))
-    )
+    permission_result = await db.execute(select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys())))
     permissions = {p.code: p for p in permission_result.scalars().all()}
     for code, (description, category) in PERMISSION_CATALOG.items():
         if code not in permissions:
-            permission = Permission(
-                code=code, description=description, category=category
-            )
+            permission = Permission(code=code, description=description, category=category)
             db.add(permission)
             await db.flush()
             permissions[code] = permission
@@ -62,9 +58,7 @@ async def seed_development_data(db: AsyncSession) -> None:
         organization.email = DEMO_EMAIL
         organization.phone = DEMO_PHONE
 
-    trial_plan = await db.scalar(
-        select(SubscriptionPlan).where(SubscriptionPlan.code == "free_trial")
-    )
+    trial_plan = await db.scalar(select(SubscriptionPlan).where(SubscriptionPlan.code == "free_trial"))
     if trial_plan is None:
         trial_plan = SubscriptionPlan(
             id=DEVELOPMENT_PLAN_ID,
@@ -81,9 +75,7 @@ async def seed_development_data(db: AsyncSession) -> None:
         await db.flush()
 
     existing_sub = await db.scalar(
-        select(OrganizationSubscription).where(
-            OrganizationSubscription.organization_id == DEVELOPMENT_ORGANIZATION_ID
-        )
+        select(OrganizationSubscription).where(OrganizationSubscription.organization_id == DEVELOPMENT_ORGANIZATION_ID)
     )
     if existing_sub is None:
         now = datetime.now(UTC)
@@ -116,9 +108,7 @@ async def seed_development_data(db: AsyncSession) -> None:
             )
         )
         if existing_link.scalar_one_or_none() is None:
-            db.add(
-                RolePermission(role_id=DEVELOPMENT_ROLE_ID, permission_id=permission.id)
-            )
+            db.add(RolePermission(role_id=DEVELOPMENT_ROLE_ID, permission_id=permission.id))
 
     user = await db.get(User, DEVELOPMENT_USER_ID)
     password_hash = AuthService.hash_password(DEMO_PASSWORD)

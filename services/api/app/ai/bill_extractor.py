@@ -160,9 +160,7 @@ def extract_bill_from_text(raw_text: str) -> ExtractedBill:
     )
 
 
-def extract_bill_from_image(
-    image_bytes: bytes, mime_type: str = "image/jpeg"
-) -> ExtractedBill:
+def extract_bill_from_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> ExtractedBill:
     prompt = (
         "You are an expert Indian GST tax invoice OCR assistant. Analyze this invoice or bill photo carefully.\n"
         "CRITICAL INSTRUCTIONS:\n"
@@ -211,9 +209,7 @@ def extract_bill_from_image(
                 bill_number=ai_data.get("bill_number"),
                 bill_date=_parse_date(ai_data.get("bill_date")),
                 due_date=_parse_date(ai_data.get("due_date")),
-                subtotal=_as_decimal(str(ai_data.get("subtotal")))
-                if ai_data.get("subtotal") is not None
-                else None,
+                subtotal=_as_decimal(str(ai_data.get("subtotal"))) if ai_data.get("subtotal") is not None else None,
                 discount_amount=_as_decimal(str(ai_data.get("discount_amount")))
                 if ai_data.get("discount_amount") is not None
                 else None,

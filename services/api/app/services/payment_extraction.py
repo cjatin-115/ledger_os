@@ -37,9 +37,7 @@ class PaymentExtractionService:
                 organization_id,
             )
             if supplier:
-                extracted = extracted.model_copy(
-                    update={"supplier_id": str(supplier.id)}
-                )
+                extracted = extracted.model_copy(update={"supplier_id": str(supplier.id)})
         return extracted
 
     async def extract_from_image(
@@ -55,9 +53,7 @@ class PaymentExtractionService:
                 organization_id,
             )
             if supplier:
-                extracted = extracted.model_copy(
-                    update={"supplier_id": str(supplier.id)}
-                )
+                extracted = extracted.model_copy(update={"supplier_id": str(supplier.id)})
         return extracted
 
     async def confirm_extracted_payment(
@@ -81,9 +77,7 @@ class PaymentExtractionService:
             )
 
         if supplier is None:
-            raise ValueError(
-                "Supplier could not be matched. Add the supplier first or pick one manually."
-            )
+            raise ValueError("Supplier could not be matched. Add the supplier first or pick one manually.")
 
         payment_date = payload.payment_date or date.today()
 
@@ -108,10 +102,8 @@ class PaymentExtractionService:
             if remaining <= 0:
                 break
 
-            allocated_to_bill = (
-                await self.allocation_repository.get_total_allocated_to_bill(
-                    bill_id=bill.id,
-                )
+            allocated_to_bill = await self.allocation_repository.get_total_allocated_to_bill(
+                bill_id=bill.id,
             )
             outstanding = Decimal(bill.total_amount) - Decimal(allocated_to_bill)
             if outstanding <= 0:
@@ -136,9 +128,7 @@ class PaymentExtractionService:
                     "bill_id": str(bill.id),
                     "bill_number": bill.bill_number,
                     "amount": str(allocate_amount.quantize(Decimal("0.01"))),
-                    "bill_status": bill.status.value
-                    if hasattr(bill.status, "value")
-                    else str(bill.status),
+                    "bill_status": bill.status.value if hasattr(bill.status, "value") else str(bill.status),
                     "outstanding_after": str(new_outstanding.quantize(Decimal("0.01"))),
                 }
             )

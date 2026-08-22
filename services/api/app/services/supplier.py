@@ -44,9 +44,7 @@ class SupplierService:
         supplier = Supplier(
             organization_id=organization_id,
             name=name,
-            contact_person=(
-                payload.contact_person.strip() if payload.contact_person else None
-            ),
+            contact_person=(payload.contact_person.strip() if payload.contact_person else None),
             phone=(payload.phone.strip() if payload.phone else None),
             email=(str(payload.email).strip().lower() if payload.email else None),
             gstin=gstin,
@@ -105,17 +103,13 @@ class SupplierService:
             supplier.name = name
 
         if "contact_person" in data:
-            supplier.contact_person = (
-                data["contact_person"].strip() if data["contact_person"] else None
-            )
+            supplier.contact_person = data["contact_person"].strip() if data["contact_person"] else None
 
         if "phone" in data:
             supplier.phone = data["phone"].strip() if data["phone"] else None
 
         if "email" in data:
-            supplier.email = (
-                str(data["email"]).strip().lower() if data["email"] else None
-            )
+            supplier.email = str(data["email"]).strip().lower() if data["email"] else None
 
         if "gstin" in data:
             gstin = data["gstin"].strip().upper() if data["gstin"] else None

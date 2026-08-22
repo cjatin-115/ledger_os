@@ -109,9 +109,7 @@ async def send_otp(
 ) -> SendOTPResponse:
     target = payload.phone_number or payload.email or ""
     if not target:
-        raise HTTPException(
-            status_code=400, detail="Phone number or email is required."
-        )
+        raise HTTPException(status_code=400, detail="Phone number or email is required.")
     otp = await service.send_otp(target)
     return SendOTPResponse(
         message=f"Verification OTP sent to {target}.",
@@ -240,21 +238,14 @@ async def redeem_coupon(
     user: User = Depends(require_permission("auth.me")),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    coupon = await db.scalar(
-        select(Coupon).where(Coupon.code == code.strip().upper()).with_for_update()
-    )
+    coupon = await db.scalar(select(Coupon).where(Coupon.code == code.strip().upper()).with_for_update())
     if (
         coupon is None
         or not coupon.is_active
-        or (
-            coupon.max_redemptions is not None
-            and coupon.redemption_count >= coupon.max_redemptions
-        )
+        or (coupon.max_redemptions is not None and coupon.redemption_count >= coupon.max_redemptions)
     ):
         raise HTTPException(status_code=400, detail="Coupon is invalid or exhausted.")
-    plan = await db.scalar(
-        select(SubscriptionPlan).where(SubscriptionPlan.code == coupon.plan_code)
-    )
+    plan = await db.scalar(select(SubscriptionPlan).where(SubscriptionPlan.code == coupon.plan_code))
     if plan is None:
         raise HTTPException(status_code=400, detail="Coupon plan is unavailable.")
     existing = await db.scalar(
@@ -266,9 +257,7 @@ async def redeem_coupon(
     if existing is not None:
         raise HTTPException(status_code=409, detail="Coupon already redeemed.")
     subscription = await db.scalar(
-        select(OrganizationSubscription).where(
-            OrganizationSubscription.organization_id == user.organization_id
-        )
+        select(OrganizationSubscription).where(OrganizationSubscription.organization_id == user.organization_id)
     )
     if subscription is None:
         raise HTTPException(
