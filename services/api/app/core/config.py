@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_NAME: str = "LedgerOS API"
     VERSION: str = "0.1.0"
-    ENVIRONMENT: Literal["development", "staging", "production"] = "development"
+    ENVIRONMENT: Literal["development", "staging", "production", "testing", "test"] = "development"
     DEBUG: bool = False
 
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/ledgeros"
