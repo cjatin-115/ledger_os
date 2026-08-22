@@ -10,6 +10,8 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: RATE_LIMIT_ENABLED
+        value: "false"
       - key: STORAGE_BACKEND
         value: s3
       - key: STORAGE_BUCKET
