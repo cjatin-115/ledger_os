@@ -25,11 +25,7 @@ class SupplierService:
         if not name:
             raise ValueError("Supplier name cannot be blank.")
 
-        gstin = (
-            payload.gstin.strip().upper()
-            if payload.gstin
-            else None
-        )
+        gstin = payload.gstin.strip().upper() if payload.gstin else None
 
         if gstin:
             if not re.fullmatch(
@@ -43,34 +39,18 @@ class SupplierService:
             )
 
             if existing:
-                raise ValueError(
-                    "A supplier with this GSTIN already exists."
-                )
+                raise ValueError("A supplier with this GSTIN already exists.")
 
         supplier = Supplier(
             organization_id=organization_id,
             name=name,
             contact_person=(
-                payload.contact_person.strip()
-                if payload.contact_person
-                else None
+                payload.contact_person.strip() if payload.contact_person else None
             ),
-            phone=(
-                payload.phone.strip()
-                if payload.phone
-                else None
-            ),
-            email=(
-                str(payload.email).strip().lower()
-                if payload.email
-                else None
-            ),
+            phone=(payload.phone.strip() if payload.phone else None),
+            email=(str(payload.email).strip().lower() if payload.email else None),
             gstin=gstin,
-            address=(
-                payload.address.strip()
-                if payload.address
-                else None
-            ),
+            address=(payload.address.strip() if payload.address else None),
             payment_terms_days=payload.payment_terms_days,
         )
 
@@ -126,31 +106,19 @@ class SupplierService:
 
         if "contact_person" in data:
             supplier.contact_person = (
-                data["contact_person"].strip()
-                if data["contact_person"]
-                else None
+                data["contact_person"].strip() if data["contact_person"] else None
             )
 
         if "phone" in data:
-            supplier.phone = (
-                data["phone"].strip()
-                if data["phone"]
-                else None
-            )
+            supplier.phone = data["phone"].strip() if data["phone"] else None
 
         if "email" in data:
             supplier.email = (
-                str(data["email"]).strip().lower()
-                if data["email"]
-                else None
+                str(data["email"]).strip().lower() if data["email"] else None
             )
 
         if "gstin" in data:
-            gstin = (
-                data["gstin"].strip().upper()
-                if data["gstin"]
-                else None
-            )
+            gstin = data["gstin"].strip().upper() if data["gstin"] else None
 
             if gstin:
                 if not re.fullmatch(
@@ -164,18 +132,12 @@ class SupplierService:
                 )
 
                 if existing and existing.id != supplier.id:
-                    raise ValueError(
-                        "A supplier with this GSTIN already exists."
-                    )
+                    raise ValueError("A supplier with this GSTIN already exists.")
 
             supplier.gstin = gstin
 
         if "address" in data:
-            supplier.address = (
-                data["address"].strip()
-                if data["address"]
-                else None
-            )
+            supplier.address = data["address"].strip() if data["address"] else None
 
         if "payment_terms_days" in data:
             supplier.payment_terms_days = data["payment_terms_days"]

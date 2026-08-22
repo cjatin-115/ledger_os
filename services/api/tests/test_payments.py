@@ -121,10 +121,7 @@ async def test_list_payments(
 
     data = response.json()
 
-    assert any(
-        payment["id"] == create_response.json()["id"]
-        for payment in data
-    )
+    assert any(payment["id"] == create_response.json()["id"] for payment in data)
 
 
 @pytest.mark.asyncio
@@ -201,5 +198,3 @@ async def test_create_full_payment_allocation(
     assert allocation["payment_id"] == payment_id
     assert allocation["bill_id"] == bill_id
     assert Decimal(allocation["amount"]) == Decimal("5000.00")
-
-    

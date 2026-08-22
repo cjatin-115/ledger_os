@@ -27,8 +27,7 @@ async def list_plans(
         .order_by(SubscriptionPlan.price_per_device)
     )
     return [
-        SubscriptionPlanResponse.model_validate(plan)
-        for plan in result.scalars().all()
+        SubscriptionPlanResponse.model_validate(plan) for plan in result.scalars().all()
     ]
 
 

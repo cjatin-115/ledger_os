@@ -5,7 +5,10 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.payment_extractor import extract_payment_from_image, extract_payment_from_text
+from app.ai.payment_extractor import (
+    extract_payment_from_image,
+    extract_payment_from_text,
+)
 from app.db.models.bill import Bill, BillStatus
 from app.db.models.supplier import Supplier
 from app.repositories.bill import BillRepository
@@ -105,8 +108,10 @@ class PaymentExtractionService:
             if remaining <= 0:
                 break
 
-            allocated_to_bill = await self.allocation_repository.get_total_allocated_to_bill(
-                bill_id=bill.id,
+            allocated_to_bill = (
+                await self.allocation_repository.get_total_allocated_to_bill(
+                    bill_id=bill.id,
+                )
             )
             outstanding = Decimal(bill.total_amount) - Decimal(allocated_to_bill)
             if outstanding <= 0:
@@ -116,7 +121,7 @@ class PaymentExtractionService:
 
             from app.schemas.payment import PaymentAllocationCreate
 
-            allocation = await self.payment_service.allocate(
+            await self.payment_service.allocate(
                 payment_id=payment.id,
                 payload=PaymentAllocationCreate(
                     bill_id=bill.id,
@@ -131,7 +136,9 @@ class PaymentExtractionService:
                     "bill_id": str(bill.id),
                     "bill_number": bill.bill_number,
                     "amount": str(allocate_amount.quantize(Decimal("0.01"))),
-                    "bill_status": bill.status.value if hasattr(bill.status, "value") else str(bill.status),
+                    "bill_status": bill.status.value
+                    if hasattr(bill.status, "value")
+                    else str(bill.status),
                     "outstanding_after": str(new_outstanding.quantize(Decimal("0.01"))),
                 }
             )

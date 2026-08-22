@@ -55,23 +55,24 @@ def extract_payment_from_text(raw_text: str) -> ExtractedPayment:
             confidence=Decimal("0.00"),
         )
 
-    supplier_name = (
-        _first_match(r"(?:Paid to|Paid To|To|Beneficiary|Merchant)\s*[:\-]?\s*(.+)", text)
-        or _first_match(r"(?:Transfer(?:red)? to)\s*(.+)", text)
-    )
+    supplier_name = _first_match(
+        r"(?:Paid to|Paid To|To|Beneficiary|Merchant)\s*[:\-]?\s*(.+)", text
+    ) or _first_match(r"(?:Transfer(?:red)? to)\s*(.+)", text)
     if supplier_name:
         supplier_name = supplier_name.split("\n")[0].strip()
 
     amount = _as_decimal(
-        _first_match(r"(?:Amount|Paid|Debited|₹|Rs\.?)\s*[:\-]?\s*([0-9][0-9,\.]*)", text)
+        _first_match(
+            r"(?:Amount|Paid|Debited|₹|Rs\.?)\s*[:\-]?\s*([0-9][0-9,\.]*)", text
+        )
         or _first_match(r"₹\s*([0-9][0-9,\.]*)", text)
         or _first_match(r"INR\s*([0-9][0-9,\.]*)", text)
     )
 
-    reference_number = (
-        _first_match(r"(?:UPI Ref(?:erence)?|UTR|Txn ID|Transaction ID|Ref(?:erence)? No\.?)\s*[:\-#]?\s*([A-Z0-9]+)", text)
-        or _first_match(r"(?:UPI)\s*[:\-]?\s*([0-9]{10,})", text)
-    )
+    reference_number = _first_match(
+        r"(?:UPI Ref(?:erence)?|UTR|Txn ID|Transaction ID|Ref(?:erence)? No\.?)\s*[:\-#]?\s*([A-Z0-9]+)",
+        text,
+    ) or _first_match(r"(?:UPI)\s*[:\-]?\s*([0-9]{10,})", text)
 
     payment_method = "upi"
     lower = text.lower()
@@ -98,7 +99,9 @@ def extract_payment_from_text(raw_text: str) -> ExtractedPayment:
 
     warnings: list[str] = []
     if not supplier_name:
-        warnings.append("Supplier name could not be detected. Pick manually on confirm.")
+        warnings.append(
+            "Supplier name could not be detected. Pick manually on confirm."
+        )
     if amount is None:
         warnings.append("Payment amount could not be detected.")
     if not reference_number:
@@ -121,7 +124,9 @@ def extract_payment_from_text(raw_text: str) -> ExtractedPayment:
     )
 
 
-def extract_payment_from_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> ExtractedPayment:
+def extract_payment_from_image(
+    image_bytes: bytes, mime_type: str = "image/jpeg"
+) -> ExtractedPayment:
     prompt = (
         "Extract all payment receipt details from this UPI / Bank transfer screenshot image in JSON format matching schema:\n"
         "{\n"
@@ -141,7 +146,9 @@ def extract_payment_from_image(image_bytes: bytes, mime_type: str = "image/jpeg"
         try:
             return ExtractedPayment(
                 supplier_name=ai_data.get("supplier_name"),
-                amount=_as_decimal(str(ai_data.get("amount"))) if ai_data.get("amount") is not None else None,
+                amount=_as_decimal(str(ai_data.get("amount")))
+                if ai_data.get("amount") is not None
+                else None,
                 payment_method=ai_data.get("payment_method", "upi"),
                 payment_date=_parse_date(ai_data.get("payment_date")) or date.today(),
                 reference_number=ai_data.get("reference_number"),
@@ -162,4 +169,3 @@ def extract_payment_from_image(image_bytes: bytes, mime_type: str = "image/jpeg"
     )
     res = extract_payment_from_text(sample_text)
     return res.model_copy(update={"warnings": ["Processed via local OCR fallback."]})
-

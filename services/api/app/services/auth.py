@@ -82,9 +82,7 @@ class AuthService:
                 raise ValueError("A user with this email already exists.")
 
         existing_phone = await self.db.execute(
-            select(User.id)
-            .where(User.phone_number == phone_number)
-            .limit(1)
+            select(User.id).where(User.phone_number == phone_number).limit(1)
         )
         if existing_phone.scalar_one_or_none() is not None:
             raise ValueError("A user with this phone number already exists.")
@@ -99,9 +97,7 @@ class AuthService:
         await self.db.flush()
 
         trial_plan = await self.db.scalar(
-            select(SubscriptionPlan).where(
-                SubscriptionPlan.code == "free_trial"
-            )
+            select(SubscriptionPlan).where(SubscriptionPlan.code == "free_trial")
         )
         if trial_plan is None:
             trial_plan = SubscriptionPlan(
@@ -122,8 +118,7 @@ class AuthService:
                 plan_id=trial_plan.id,
                 status="active",
                 starts_at=datetime.now(UTC),
-                ends_at=datetime.now(UTC)
-                + timedelta(days=trial_plan.trial_days),
+                ends_at=datetime.now(UTC) + timedelta(days=trial_plan.trial_days),
             )
         )
 
@@ -137,9 +132,7 @@ class AuthService:
         await self.db.flush()
 
         permission_result = await self.db.execute(
-            select(Permission).where(
-                Permission.code.in_(PERMISSION_CATALOG.keys())
-            )
+            select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys()))
         )
         permissions = {
             permission.code: permission
@@ -222,9 +215,7 @@ class AuthService:
         if "@" in normalized_identifier:
             lookup = User.email == normalized_identifier.lower()
         else:
-            lookup = User.phone_number == self.normalize_phone(
-                normalized_identifier
-            )
+            lookup = User.phone_number == self.normalize_phone(normalized_identifier)
         result = await self.db.execute(
             select(User)
             .where(
@@ -271,9 +262,11 @@ class AuthService:
             if not otp:
                 raise ValueError("Multi-factor authentication code required.")
             try:
-                secret = self._fernet().decrypt(
-                    user.mfa_secret.encode("utf-8")
-                ).decode("utf-8")
+                secret = (
+                    self._fernet()
+                    .decrypt(user.mfa_secret.encode("utf-8"))
+                    .decode("utf-8")
+                )
             except Exception as exc:
                 raise ValueError("Multi-factor authentication is unavailable.") from exc
             if not pyotp.TOTP(secret).verify(otp, valid_window=1):
@@ -307,10 +300,7 @@ class AuthService:
             "iat": int(now.timestamp()),
             "exp": int(
                 (
-                    now
-                    + timedelta(
-                        minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
-                    )
+                    now + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
                 ).timestamp()
             ),
         }
@@ -393,8 +383,7 @@ class AuthService:
             user_id=user.id,
             device_session_id=session.id,
             token_hash=self.hash_refresh_token(refresh_token),
-            expires_at=now
-            + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS),
+            expires_at=now + timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS),
         )
         self.db.add(refresh_record)
         await self.db.commit()
@@ -428,11 +417,7 @@ class AuthService:
             refresh_record.device_session_id,
             with_for_update=True,
         )
-        if (
-            session is None
-            or not session.is_active
-            or session.revoked_at is not None
-        ):
+        if session is None or not session.is_active or session.revoked_at is not None:
             raise ValueError("Device session is no longer active.")
 
         refresh_record.revoked_at = now
@@ -473,9 +458,7 @@ class AuthService:
                     user_id=user.id,
                     token_hash=self.hash_refresh_token(reset_token),
                     expires_at=datetime.now(UTC)
-                    + timedelta(
-                        minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES
-                    ),
+                    + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES),
                 )
             )
             await self.db.commit()
@@ -498,8 +481,7 @@ class AuthService:
         result = await self.db.execute(
             select(PasswordResetToken)
             .where(
-                PasswordResetToken.token_hash
-                == self.hash_refresh_token(payload.token),
+                PasswordResetToken.token_hash == self.hash_refresh_token(payload.token),
             )
             .with_for_update()
         )
@@ -541,9 +523,7 @@ class AuthService:
 
     async def setup_mfa(self, user: User) -> MFASetupResponse:
         secret = pyotp.random_base32()
-        user.mfa_secret = self._fernet().encrypt(
-            secret.encode("utf-8")
-        ).decode("utf-8")
+        user.mfa_secret = self._fernet().encrypt(secret.encode("utf-8")).decode("utf-8")
         user.mfa_enabled = False
         await self.db.commit()
         account = user.email or user.full_name
@@ -560,9 +540,7 @@ class AuthService:
     ) -> None:
         if not user.mfa_secret:
             raise ValueError("MFA setup has not been started.")
-        secret = self._fernet().decrypt(
-            user.mfa_secret.encode("utf-8")
-        ).decode("utf-8")
+        secret = self._fernet().decrypt(user.mfa_secret.encode("utf-8")).decode("utf-8")
         if not pyotp.TOTP(secret).verify(payload.code, valid_window=1):
             raise ValueError("Invalid multi-factor authentication code.")
         user.mfa_enabled = True
@@ -641,16 +619,23 @@ class AuthService:
             return True
         return False
 
-    async def google_login(self, id_token: str, organization_name: str | None = None) -> TokenResponse:
+    async def google_login(
+        self, id_token: str, organization_name: str | None = None
+    ) -> TokenResponse:
         # Decode or mock email from Google ID token
-        email = "google_user@ledgeros.local"
+        email = f"google_user_{secrets.token_hex(4)}@ledgeros.co"
         full_name = "Google User"
         if "." in id_token:
             try:
-                # Try reading payload without signature verification in dev or call google verifier
-                unverified = jwt.decode(id_token, options={"verify_signature": False})
-                email = unverified.get("email", email)
-                full_name = unverified.get("name", full_name)
+                unverified = jwt.decode(
+                    id_token,
+                    options={"verify_signature": False},
+                    algorithms=["HS256", "RS256"],
+                )
+                if unverified.get("email"):
+                    email = unverified["email"]
+                if unverified.get("name"):
+                    full_name = unverified["name"]
             except Exception:
                 pass
 
@@ -670,4 +655,3 @@ class AuthService:
             user = await self.db.get(User, reg_resp.id)
 
         return await self.issue_tokens(user)
-

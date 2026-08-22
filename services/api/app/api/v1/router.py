@@ -1,19 +1,19 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
-    auth,
     admin,
     attachments,
+    auth,
     bill_scan,
     bills,
     dashboard,
     health,
     ledger,
+    ocr_feedback,
+    payment_scan,
+    payments,
     reminders,
     subscriptions,
-    ocr_feedback,
-    payments,
-    payment_scan,
     suppliers,
 )
 

@@ -32,7 +32,9 @@ def call_gemini_vision(
     """Call Google Gemini Vision API using Google GenAI SDK to analyze image content and return structured JSON."""
     api_key = settings.GEMINI_API_KEY
     if not api_key:
-        logger.info("GEMINI_API_KEY is not set in environment or .env. Using local fallback.")
+        logger.info(
+            "GEMINI_API_KEY is not set in environment or .env. Using local fallback."
+        )
         print("[Gemini AI] GEMINI_API_KEY is empty. Using local OCR fallback.")
         return None
 
@@ -84,10 +86,14 @@ def call_gemini_vision(
 
             cleaned_text = _clean_json_string(text_content)
             parsed_json = json.loads(cleaned_text)
-            print(f"[Gemini AI] Successfully extracted invoice using model: {model_name}")
+            print(
+                f"[Gemini AI] Successfully extracted invoice using model: {model_name}"
+            )
             return parsed_json
         except Exception as exc:
-            print(f"[Gemini AI Warning] Model {model_name} failed: {exc}. Trying next model...")
+            print(
+                f"[Gemini AI Warning] Model {model_name} failed: {exc}. Trying next model..."
+            )
             logger.warning(f"Gemini API vision call failed on {model_name}: {exc}")
 
     return None

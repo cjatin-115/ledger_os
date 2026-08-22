@@ -26,7 +26,8 @@ async def test_dashboard_returns_organization_summary(client):
 
 
 @pytest.mark.asyncio
-async def test_readiness_returns_dependency_failure_without_redis():
+async def test_readiness_returns_dependency_failure_without_redis(monkeypatch):
+    monkeypatch.setattr("app.core.config.settings.REDIS_URL", "redis://invalid-redis-host:6379/0")
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:

@@ -1,4 +1,3 @@
-
 import pytest
 from httpx import AsyncClient
 
@@ -45,7 +44,6 @@ BILL_PAYLOAD = {
         },
     ],
 }
-
 
 
 @pytest.mark.asyncio
@@ -256,6 +254,7 @@ async def test_invalid_bill_input(
 
     assert response.status_code == 422
 
+
 @pytest.mark.asyncio
 async def test_post_bill_creates_ledger_transaction(
     client: AsyncClient,
@@ -323,4 +322,4 @@ async def test_scan_bill_image_extracts_data(
     assert response.status_code == 200
     data = response.json()
     assert "supplier_name" in data
-    assert "total_amount" in data
+    assert "total_amount" in data

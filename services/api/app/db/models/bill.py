@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.db.models.bill_adjustment import BillAdjustment
     from app.db.models.bill_item import BillItem
     from app.db.models.payment_allocation import PaymentAllocation
+    from app.db.models.supplier import Supplier
 
 
 class BillStatus(StrEnum):

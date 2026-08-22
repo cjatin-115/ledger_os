@@ -134,9 +134,7 @@ async def test_login_returns_access_token(client):
 
         for permission_code in PERMISSION_CATALOG:
             permission_result = await db.execute(
-                select(Permission).where(
-                    Permission.code == permission_code
-                )
+                select(Permission).where(Permission.code == permission_code)
             )
             catalog_permission = permission_result.scalar_one_or_none()
             if catalog_permission is None:
@@ -254,9 +252,7 @@ async def test_login_locks_account_after_repeated_failures(client):
         json={"email": email, "password": "StrongPass!123"},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()["detail"] == (
-        "Account temporarily locked. Try again later."
-    )
+    assert response.json()["detail"] == ("Account temporarily locked. Try again later.")
 
 
 @pytest.mark.asyncio
@@ -440,10 +436,9 @@ async def test_otp_send_and_verify(client):
 async def test_google_login(client):
     response = await client.post(
         "/api/v1/auth/google",
-        json={"id_token": "fake_google_id_token", "organization_name": "Google Shop"},
+        json={"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imdvb2dsZV91c2VyQGxlZGdlcm9zLmxvY2FsIn0.signature", "organization_name": "Google Shop"},
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "access_token" in data
     assert "refresh_token" in data
-

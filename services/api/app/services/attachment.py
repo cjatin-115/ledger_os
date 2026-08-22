@@ -2,7 +2,10 @@ import asyncio
 from pathlib import Path
 from uuid import UUID, uuid4
 
-import boto3
+try:
+    import boto3
+except ImportError:
+    boto3 = None
 from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,9 +44,7 @@ class AttachmentService:
         if not file_name or len(file_name) > 255:
             raise ValueError("Attachment filename is invalid.")
 
-        storage_key = (
-            f"{organization_id}/{entity_type.value}/{entity_id}/{uuid4()}"
-        )
+        storage_key = f"{organization_id}/{entity_type.value}/{entity_id}/{uuid4()}"
         file_size = 0
         content = bytearray()
         try:
@@ -91,6 +92,8 @@ class AttachmentService:
 
     @staticmethod
     def _s3_client():
+        if boto3 is None:
+            raise RuntimeError("boto3 is required for S3 storage.")
         return boto3.client(
             "s3",
             endpoint_url=settings.STORAGE_ENDPOINT_URL,

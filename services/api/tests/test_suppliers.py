@@ -49,10 +49,8 @@ async def test_list_suppliers(client: AsyncClient) -> None:
 
     data = response.json()
 
-    assert any(
-        supplier["id"] == created_supplier["id"]
-        for supplier in data
-    )
+    assert any(supplier["id"] == created_supplier["id"] for supplier in data)
+
 
 @pytest.mark.asyncio
 async def test_get_supplier(client: AsyncClient) -> None:

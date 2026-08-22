@@ -27,13 +27,11 @@ from app.db.models.user import User
 from app.db.session import get_db
 from app.main import app
 
-TEST_ORGANIZATION_ID = UUID(
-    "00000000-0000-0000-0000-000000000010"
-)
+settings.RATE_LIMIT_ENABLED = False
 
-TEST_SUPPLIER_ID = UUID(
-    "00000000-0000-0000-0000-000000000011"
-)
+TEST_ORGANIZATION_ID = UUID("00000000-0000-0000-0000-000000000010")
+
+TEST_SUPPLIER_ID = UUID("00000000-0000-0000-0000-000000000011")
 
 TEST_USER_ID = UUID("00000000-0000-0000-0000-000000000012")
 TEST_ROLE_ID = UUID("00000000-0000-0000-0000-000000000013")
@@ -75,9 +73,9 @@ async def override_get_current_user() -> User:
 
 
 app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[
-    get_current_organization_id
-] = override_get_current_organization_id
+app.dependency_overrides[get_current_organization_id] = (
+    override_get_current_organization_id
+)
 app.dependency_overrides[get_current_user] = override_get_current_user
 
 
@@ -111,9 +109,7 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
             await db.flush()
 
         permission_result = await db.execute(
-            select(Permission).where(
-                Permission.code.in_(PERMISSION_CATALOG.keys())
-            )
+            select(Permission).where(Permission.code.in_(PERMISSION_CATALOG.keys()))
         )
         permissions = {
             permission.code: permission
@@ -202,27 +198,20 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 
         await db.execute(
             delete(AccountTransaction).where(
-                AccountTransaction.organization_id
-                == TEST_ORGANIZATION_ID
+                AccountTransaction.organization_id == TEST_ORGANIZATION_ID
             )
         )
 
         await db.execute(
-            delete(Payment).where(
-                Payment.organization_id == TEST_ORGANIZATION_ID
-            )
+            delete(Payment).where(Payment.organization_id == TEST_ORGANIZATION_ID)
         )
 
         await db.execute(
-            delete(Bill).where(
-                Bill.organization_id == TEST_ORGANIZATION_ID
-            )
+            delete(Bill).where(Bill.organization_id == TEST_ORGANIZATION_ID)
         )
 
         await db.execute(
-            delete(Supplier).where(
-                Supplier.organization_id == TEST_ORGANIZATION_ID
-            )
+            delete(Supplier).where(Supplier.organization_id == TEST_ORGANIZATION_ID)
         )
 
         await db.commit()

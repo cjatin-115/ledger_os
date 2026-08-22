@@ -70,8 +70,7 @@ class BillRepository:
         """Find a bill by supplier invoice number."""
 
         result = await self.db.execute(
-            select(Bill)
-            .where(
+            select(Bill).where(
                 Bill.organization_id == organization_id,
                 Bill.supplier_id == supplier_id,
                 Bill.bill_number == bill_number,
@@ -101,18 +100,14 @@ class BillRepository:
             )
         )
         if search:
-            statement = statement.where(
-                Bill.bill_number.ilike(f"%{search.strip()}%")
-            )
+            statement = statement.where(Bill.bill_number.ilike(f"%{search.strip()}%"))
         if status:
             statement = statement.where(Bill.status == status)
         if due_before:
             statement = statement.where(Bill.due_date <= due_before)
         if due_after:
             statement = statement.where(Bill.due_date >= due_after)
-        result = await self.db.execute(
-            statement.order_by(Bill.bill_date.desc())
-        )
+        result = await self.db.execute(statement.order_by(Bill.bill_date.desc()))
 
         return list(result.scalars().all())
 

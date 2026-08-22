@@ -57,8 +57,7 @@ class BillService:
 
         if existing_bill is not None:
             raise ValueError(
-                "A bill with this number already exists "
-                "for this supplier."
+                "A bill with this number already exists for this supplier."
             )
 
         for candidate in await self.repository.list_for_supplier(
@@ -78,18 +77,11 @@ class BillService:
             ):
                 raise ValueError("A likely duplicate bill already exists.")
 
-        if (
-            payload.due_date is not None
-            and payload.due_date < payload.bill_date
-        ):
-            raise ValueError(
-                "Due date cannot be earlier than bill date."
-            )
+        if payload.due_date is not None and payload.due_date < payload.bill_date:
+            raise ValueError("Due date cannot be earlier than bill date.")
 
         if payload.discount_amount > payload.subtotal:
-            raise ValueError(
-                "Bill discount cannot exceed subtotal."
-            )
+            raise ValueError("Bill discount cannot exceed subtotal.")
 
         expected_taxable = payload.subtotal - payload.discount_amount
         if abs(expected_taxable - payload.taxable_amount) > Decimal("1.00"):
@@ -101,19 +93,12 @@ class BillService:
             description = item_payload.description.strip()
 
             if not description:
-                raise ValueError(
-                    "Bill item description cannot be blank."
-                )
+                raise ValueError("Bill item description cannot be blank.")
 
-            gross_amount = (
-                item_payload.quantity
-                * item_payload.unit_price
-            )
+            gross_amount = item_payload.quantity * item_payload.unit_price
 
             if item_payload.discount_amount > gross_amount:
-                raise ValueError(
-                    "Item discount cannot exceed gross item amount."
-                )
+                raise ValueError("Item discount cannot exceed gross item amount.")
 
             items.append(
                 BillItem(
@@ -126,9 +111,7 @@ class BillService:
                     tax_amount=item_payload.tax_amount,
                     line_total=item_payload.line_total,
                     hsn_code=(
-                        item_payload.hsn_code.strip()
-                        if item_payload.hsn_code
-                        else None
+                        item_payload.hsn_code.strip() if item_payload.hsn_code else None
                     ),
                 )
             )
@@ -148,11 +131,7 @@ class BillService:
             total_amount=payload.total_amount,
             status=BillStatus.DRAFT,
             source_type=BillSourceType.MANUAL,
-            notes=(
-                payload.notes.strip()
-                if payload.notes
-                else None
-            ),
+            notes=(payload.notes.strip() if payload.notes else None),
             items=items,
         )
 
@@ -211,9 +190,7 @@ class BillService:
             raise ValueError("Bill not found.")
 
         if bill.status != BillStatus.DRAFT:
-            raise ValueError(
-                f"Bill cannot be posted from status '{bill.status}'."
-            )
+            raise ValueError(f"Bill cannot be posted from status '{bill.status}'.")
 
         transaction = AccountTransaction(
             organization_id=organization_id,

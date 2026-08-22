@@ -1,7 +1,7 @@
 import json
-import base64
-import urllib.request
 import urllib.error
+import urllib.request
+
 from app.core.config import settings
 
 api_key = settings.GEMINI_API_KEY
@@ -15,7 +15,9 @@ for model_name in ["gemini-2.5-flash", "gemini-flash-latest", "gemini-1.5-flash"
         "contents": [
             {
                 "parts": [
-                    {"text": "Analyze this image and return JSON: {\"color\": string, \"status\": \"ok\"}"},
+                    {
+                        "text": 'Analyze this image and return JSON: {"color": string, "status": "ok"}'
+                    },
                     {
                         "inline_data": {
                             "mime_type": "image/png",

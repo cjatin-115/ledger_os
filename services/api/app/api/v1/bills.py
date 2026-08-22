@@ -97,6 +97,7 @@ async def get_bill(
 
     return bill
 
+
 @router.post(
     "/{bill_id}/post",
     response_model=BillResponse,

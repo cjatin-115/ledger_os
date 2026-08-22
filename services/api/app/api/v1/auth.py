@@ -109,7 +109,9 @@ async def send_otp(
 ) -> SendOTPResponse:
     target = payload.phone_number or payload.email or ""
     if not target:
-        raise HTTPException(status_code=400, detail="Phone number or email is required.")
+        raise HTTPException(
+            status_code=400, detail="Phone number or email is required."
+        )
     otp = await service.send_otp(target)
     return SendOTPResponse(
         message=f"Verification OTP sent to {target}.",
@@ -239,9 +241,7 @@ async def redeem_coupon(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     coupon = await db.scalar(
-        select(Coupon)
-        .where(Coupon.code == code.strip().upper())
-        .with_for_update()
+        select(Coupon).where(Coupon.code == code.strip().upper()).with_for_update()
     )
     if (
         coupon is None
@@ -253,9 +253,7 @@ async def redeem_coupon(
     ):
         raise HTTPException(status_code=400, detail="Coupon is invalid or exhausted.")
     plan = await db.scalar(
-        select(SubscriptionPlan).where(
-            SubscriptionPlan.code == coupon.plan_code
-        )
+        select(SubscriptionPlan).where(SubscriptionPlan.code == coupon.plan_code)
     )
     if plan is None:
         raise HTTPException(status_code=400, detail="Coupon plan is unavailable.")

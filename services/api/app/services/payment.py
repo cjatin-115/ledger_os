@@ -57,9 +57,7 @@ class PaymentService:
         try:
             payment_method_enum = PaymentMethod(payment_method)
         except ValueError as exc:
-            raise ValueError(
-                f"Invalid payment method: {payment_method}."
-            ) from exc
+            raise ValueError(f"Invalid payment method: {payment_method}.") from exc
 
         payment = Payment(
             organization_id=organization_id,
@@ -68,27 +66,15 @@ class PaymentService:
             payment_method=payment_method_enum,
             payment_date=payload.payment_date,
             reference_number=(
-                payload.reference_number.strip()
-                if payload.reference_number
-                else None
+                payload.reference_number.strip() if payload.reference_number else None
             ),
             cheque_number=(
-                payload.cheque_number.strip()
-                if payload.cheque_number
-                else None
+                payload.cheque_number.strip() if payload.cheque_number else None
             ),
             cheque_date=payload.cheque_date,
-            bank_name=(
-                payload.bank_name.strip()
-                if payload.bank_name
-                else None
-            ),
+            bank_name=(payload.bank_name.strip() if payload.bank_name else None),
             status=PaymentStatus.RECORDED,
-            notes=(
-                payload.notes.strip()
-                if payload.notes
-                else None
-            ),
+            notes=(payload.notes.strip() if payload.notes else None),
         )
 
         try:
@@ -136,9 +122,7 @@ class PaymentService:
             raise ValueError("Payment not found.")
 
         if payment.status != PaymentStatus.RECORDED:
-            raise ValueError(
-                "Only recorded payments can be allocated."
-            )
+            raise ValueError("Only recorded payments can be allocated.")
 
         bill = await self.bill_repository.get_by_id(
             bill_id=payload.bill_id,
@@ -150,32 +134,22 @@ class PaymentService:
             raise ValueError("Bill not found.")
 
         if bill.supplier_id != payment.supplier_id:
-            raise ValueError(
-                "Payment and bill must belong to the same supplier."
-            )
+            raise ValueError("Payment and bill must belong to the same supplier.")
 
         if bill.status in {
             BillStatus.CANCELLED,
             BillStatus.DRAFT,
         }:
-            raise ValueError(
-                "Only posted bills can receive payments."
-            )
+            raise ValueError("Only posted bills can receive payments.")
 
-        allocated_to_payment = (
-            await self.allocation_repository.get_total_allocated(
-                payment_id=payment.id,
-            )
+        allocated_to_payment = await self.allocation_repository.get_total_allocated(
+            payment_id=payment.id,
         )
 
-        payment_remaining = (
-            Decimal(payment.amount) - Decimal(allocated_to_payment)
-        )
+        payment_remaining = Decimal(payment.amount) - Decimal(allocated_to_payment)
 
         if payload.amount > payment_remaining:
-            raise ValueError(
-                "Allocation exceeds the remaining payment amount."
-            )
+            raise ValueError("Allocation exceeds the remaining payment amount.")
 
         allocated_to_bill = (
             await self.allocation_repository.get_total_allocated_to_bill(
@@ -183,15 +157,10 @@ class PaymentService:
             )
         )
 
-        bill_outstanding = (
-            Decimal(bill.total_amount)
-            - Decimal(allocated_to_bill)
-        )
+        bill_outstanding = Decimal(bill.total_amount) - Decimal(allocated_to_bill)
 
         if payload.amount > bill_outstanding:
-            raise ValueError(
-                "Allocation exceeds the bill outstanding amount."
-            )
+            raise ValueError("Allocation exceeds the bill outstanding amount.")
 
         allocation = PaymentAllocation(
             payment_id=payment.id,
@@ -200,9 +169,7 @@ class PaymentService:
         )
 
         try:
-            allocation = await self.allocation_repository.create(
-                allocation
-            )
+            allocation = await self.allocation_repository.create(allocation)
 
             transaction = AccountTransaction(
                 organization_id=organization_id,
@@ -213,17 +180,12 @@ class PaymentService:
                 debit_amount=0,
                 credit_amount=payload.amount,
                 transaction_date=payment.payment_date,
-                description=(
-                    f"Payment allocated to bill "
-                    f"{bill.bill_number}"
-                ),
+                description=(f"Payment allocated to bill {bill.bill_number}"),
             )
 
             await self.transaction_repository.create(transaction)
 
-            new_bill_outstanding = (
-                bill_outstanding - payload.amount
-            )
+            new_bill_outstanding = bill_outstanding - payload.amount
 
             if new_bill_outstanding == 0:
                 bill.status = BillStatus.PAID

@@ -130,4 +130,3 @@ class VerifyOTPResponse(BaseModel):
 class GoogleAuthRequest(BaseModel):
     id_token: str
     organization_name: str | None = "My Business"
-

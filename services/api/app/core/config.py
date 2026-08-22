@@ -1,16 +1,14 @@
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     APP_NAME: str = "LedgerOS API"
     VERSION: str = "0.1.0"
-    ENVIRONMENT: Literal["development", "staging", "production"] = (
-        "development"
-    )
+    ENVIRONMENT: Literal["development", "staging", "production"] = "development"
     DEBUG: bool = False
 
     DATABASE_URL: str = (
@@ -21,9 +19,7 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
-    MFA_ENCRYPTION_KEY: str = (
-        "6pW5b9L0E5sXqJxV1R8w2eN7tY4uI3oP6aS9dF0gH2k="
-    )
+    MFA_ENCRYPTION_KEY: str = "6pW5b9L0E5sXqJxV1R8w2eN7tY4uI3oP6aS9dF0gH2k="
     REDIS_URL: str = "redis://localhost:6379/0"
     RATE_LIMIT_ENABLED: bool = True
     STORAGE_BUCKET: str = "ledgeros-dev-bucket"
@@ -51,6 +47,19 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("[") and v.endswith("]"):
+                import json
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
         if self.ENVIRONMENT == "production":
@@ -59,13 +68,9 @@ class Settings(BaseSettings):
             if self.MFA_ENCRYPTION_KEY == (
                 "6pW5b9L0E5sXqJxV1R8w2eN7tY4uI3oP6aS9dF0gH2k="
             ):
-                raise ValueError(
-                    "MFA_ENCRYPTION_KEY must be configured in production."
-                )
+                raise ValueError("MFA_ENCRYPTION_KEY must be configured in production.")
             if self.STORAGE_BACKEND != "s3":
-                raise ValueError(
-                    "STORAGE_BACKEND must be s3 in production."
-                )
+                raise ValueError("STORAGE_BACKEND must be s3 in production.")
         return self
 
 

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.permissions import PERMISSION_CATALOG
-from app.db.models.bill import Bill, BillStatus
+from app.db.models.bill import Bill
 from app.db.models.organization import Organization
 from app.db.models.organization_subscription import OrganizationSubscription
 from app.db.models.permission import Permission
@@ -39,7 +39,9 @@ async def seed_development_data(db: AsyncSession) -> None:
     permissions = {p.code: p for p in permission_result.scalars().all()}
     for code, (description, category) in PERMISSION_CATALOG.items():
         if code not in permissions:
-            permission = Permission(code=code, description=description, category=category)
+            permission = Permission(
+                code=code, description=description, category=category
+            )
             db.add(permission)
             await db.flush()
             permissions[code] = permission

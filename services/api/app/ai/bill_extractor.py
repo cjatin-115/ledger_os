@@ -70,10 +70,9 @@ def extract_bill_from_text(raw_text: str) -> ExtractedBill:
 
     gstin = _first_match(r"GSTIN\s*[:\-]?\s*([A-Z0-9]+)", text) or None
 
-    bill_number = (
-        _first_match(r"(?:Invoice\s*No|Bill\s*No|Invoice\s*Number)\s*[:#-]?\s*([A-Z0-9/-]+)", text)
-        or _first_match(r"(?:INV|BILL)[A-Z0-9-]+", text)
-    )
+    bill_number = _first_match(
+        r"(?:Invoice\s*No|Bill\s*No|Invoice\s*Number)\s*[:#-]?\s*([A-Z0-9/-]+)", text
+    ) or _first_match(r"(?:INV|BILL)[A-Z0-9-]+", text)
 
     bill_date = None
     date_candidates = re.findall(r"\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b", text)
@@ -148,18 +147,22 @@ def extract_bill_from_text(raw_text: str) -> ExtractedBill:
         items=items,
         confidence=confidence,
         warnings=warnings,
-    ).model_copy(update={
-        "subtotal": subtotal,
-        "discount_amount": discount,
-        "taxable_amount": taxable,
-        "cgst_amount": cgst,
-        "sgst_amount": sgst,
-        "igst_amount": igst,
-        "total_amount": total,
-    })
+    ).model_copy(
+        update={
+            "subtotal": subtotal,
+            "discount_amount": discount,
+            "taxable_amount": taxable,
+            "cgst_amount": cgst,
+            "sgst_amount": sgst,
+            "igst_amount": igst,
+            "total_amount": total,
+        }
+    )
 
 
-def extract_bill_from_image(image_bytes: bytes, mime_type: str = "image/jpeg") -> ExtractedBill:
+def extract_bill_from_image(
+    image_bytes: bytes, mime_type: str = "image/jpeg"
+) -> ExtractedBill:
     prompt = (
         "You are an expert Indian GST tax invoice OCR assistant. Analyze this invoice or bill photo carefully.\n"
         "CRITICAL INSTRUCTIONS:\n"
@@ -208,13 +211,27 @@ def extract_bill_from_image(image_bytes: bytes, mime_type: str = "image/jpeg") -
                 bill_number=ai_data.get("bill_number"),
                 bill_date=_parse_date(ai_data.get("bill_date")),
                 due_date=_parse_date(ai_data.get("due_date")),
-                subtotal=_as_decimal(str(ai_data.get("subtotal"))) if ai_data.get("subtotal") is not None else None,
-                discount_amount=_as_decimal(str(ai_data.get("discount_amount"))) if ai_data.get("discount_amount") is not None else None,
-                taxable_amount=_as_decimal(str(ai_data.get("taxable_amount"))) if ai_data.get("taxable_amount") is not None else None,
-                cgst_amount=_as_decimal(str(ai_data.get("cgst_amount"))) if ai_data.get("cgst_amount") is not None else None,
-                sgst_amount=_as_decimal(str(ai_data.get("sgst_amount"))) if ai_data.get("sgst_amount") is not None else None,
-                igst_amount=_as_decimal(str(ai_data.get("igst_amount"))) if ai_data.get("igst_amount") is not None else None,
-                total_amount=_as_decimal(str(ai_data.get("total_amount"))) if ai_data.get("total_amount") is not None else None,
+                subtotal=_as_decimal(str(ai_data.get("subtotal")))
+                if ai_data.get("subtotal") is not None
+                else None,
+                discount_amount=_as_decimal(str(ai_data.get("discount_amount")))
+                if ai_data.get("discount_amount") is not None
+                else None,
+                taxable_amount=_as_decimal(str(ai_data.get("taxable_amount")))
+                if ai_data.get("taxable_amount") is not None
+                else None,
+                cgst_amount=_as_decimal(str(ai_data.get("cgst_amount")))
+                if ai_data.get("cgst_amount") is not None
+                else None,
+                sgst_amount=_as_decimal(str(ai_data.get("sgst_amount")))
+                if ai_data.get("sgst_amount") is not None
+                else None,
+                igst_amount=_as_decimal(str(ai_data.get("igst_amount")))
+                if ai_data.get("igst_amount") is not None
+                else None,
+                total_amount=_as_decimal(str(ai_data.get("total_amount")))
+                if ai_data.get("total_amount") is not None
+                else None,
                 items=items,
                 confidence=Decimal(str(ai_data.get("confidence", 0.95))),
                 warnings=ai_data.get("warnings", []),
@@ -235,4 +252,3 @@ def extract_bill_from_image(image_bytes: bytes, mime_type: str = "image/jpeg") -
     )
     res = extract_bill_from_text(sample_text)
     return res.model_copy(update={"warnings": ["Processed via local OCR fallback."]})
-
