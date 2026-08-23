@@ -4,6 +4,9 @@
     "slug": "flova",
     "version": "0.1.0",
     "scheme": "ledgeros",
+    "updates": {
+      "enabled": false
+    },
     "web": {
       "bundler": "metro"
     },

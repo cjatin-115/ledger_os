@@ -30,11 +30,42 @@ async function parseError(response: Response): Promise<string> {
   }
 }
 
+const DEFAULT_PROD_URL = 'https://ledgeros-api.onrender.com';
+let cachedBaseUrl: string | null = null;
+
+export async function getEffectiveBaseUrl(): Promise<string> {
+  if (cachedBaseUrl) return cachedBaseUrl;
+
+  const candidates = Array.from(
+    new Set([API_BASE_URL, DEFAULT_PROD_URL].filter(Boolean)),
+  );
+
+  for (const candidate of candidates) {
+    const clean = candidate.replace(/\/+$/, '');
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const res = await fetch(`${clean}/api/v1/health`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        cachedBaseUrl = clean;
+        return clean;
+      }
+    } catch {
+      // Ignore network errors and test next candidate
+    }
+  }
+
+  cachedBaseUrl = DEFAULT_PROD_URL.replace(/\/+$/, '');
+  return cachedBaseUrl;
+}
+
 async function refreshAccessToken(): Promise<boolean> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) return false;
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+  const baseUrl = await getEffectiveBaseUrl();
+  const response = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: refreshToken }),
@@ -67,7 +98,8 @@ export async function apiRequest<T>(
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/v1${path}`, {
+  const baseUrl = await getEffectiveBaseUrl();
+  const response = await fetch(`${baseUrl}/api/v1${path}`, {
     method,
     headers,
     body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
@@ -92,11 +124,12 @@ export async function apiRequest<T>(
 }
 
 export async function checkBackendHealth(): Promise<boolean> {
+  const baseUrl = await getEffectiveBaseUrl();
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/health`);
-    if (!response.ok) return false;
-    const data = (await response.json()) as { status: string };
-    return data.status === 'ok';
+    const response = await fetch(`${baseUrl}/api/v1/health`);
+    if (response.ok) return true;
+    const fallbackRes = await fetch(`${baseUrl}/health`);
+    return fallbackRes.ok;
   } catch {
     return false;
   }
