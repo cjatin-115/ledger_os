@@ -1,11 +1,13 @@
 {
   "expo": {
     "name": "ledgeros-mobile",
-    "slug": "flova",
+    "slug": "ledgeros-mobile",
     "version": "0.1.0",
     "scheme": "ledgeros",
     "updates": {
-      "enabled": false
+      "enabled": false,
+      "checkAutomatically": "NEVER",
+      "fallbackToCacheTimeout": 0
     },
     "web": {
       "bundler": "metro"
@@ -24,14 +26,10 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "297b925b-92c4-4c2b-b165-bbbfe7189ca1"
       }
     },
-    "owner": "flova",
     "android": {
-      "package": "com.flova.flova"
+      "package": "com.ledgeros.mobile"
     }
   }
 }
