@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str | None = None
     GOOGLE_CLIENT_ID: str | None = None
     API_PREFIX: str = "/api"
-    CORS_ORIGINS: list[str] | str = ["http://localhost:8081", "http://localhost:19006"]
+    CORS_ORIGINS: list[str] | str = ["*"]
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -26,6 +26,7 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<Mode>('login');
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState<boolean | null>(null);
+  const [checking, setChecking] = useState(false);
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -34,9 +35,28 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
 
-  React.useEffect(() => {
-    checkBackendHealth().then(setConnected);
+  const performHealthCheck = React.useCallback(async () => {
+    setChecking(true);
+    try {
+      const ok = await checkBackendHealth();
+      setConnected(ok);
+    } catch {
+      setConnected(false);
+    } finally {
+      setChecking(false);
+    }
   }, []);
+
+  React.useEffect(() => {
+    performHealthCheck();
+    // Auto-retry checking health every 5s if not connected (helpful for cloud cold starts)
+    const interval = setInterval(() => {
+      if (!connected) {
+        performHealthCheck();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [connected, performHealthCheck]);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -82,16 +102,34 @@ export default function LoginScreen() {
             </View>
             <Text style={styles.brand}>LedgerOS</Text>
             <Text style={styles.tagline}>Smart payables for your shop</Text>
-            <View style={styles.statusRow}>
-              <View style={[styles.dot, connected && styles.dotOnline]} />
+            <Pressable
+              style={styles.statusRow}
+              onPress={performHealthCheck}
+              disabled={checking}
+            >
+              <View
+                style={[
+                  styles.dot,
+                  connected
+                    ? styles.dotOnline
+                    : checking
+                      ? styles.dotChecking
+                      : styles.dotOffline,
+                ]}
+              />
               <Text style={styles.statusText}>
-                {connected === null
-                  ? 'Checking server…'
-                  : connected
-                    ? 'Server connected'
-                    : 'Server offline — start the API first'}
+                {checking
+                  ? 'Connecting to backend…'
+                  : connected === null
+                    ? 'Checking server status…'
+                    : connected
+                      ? 'Server connected'
+                      : 'Server offline — tap to retry'}
               </Text>
-            </View>
+              {!connected && !checking && (
+                <Ionicons name="reload" size={12} color={colors.textMuted} style={{ marginLeft: 2 }} />
+              )}
+            </Pressable>
           </View>
 
           <View style={styles.tabs}>
@@ -211,6 +249,8 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.md, gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.warning },
   dotOnline: { backgroundColor: colors.success },
+  dotChecking: { backgroundColor: colors.primary },
+  dotOffline: { backgroundColor: colors.danger },
   statusText: { ...typography.caption, color: colors.textSecondary },
   tabs: {
     flexDirection: 'row',

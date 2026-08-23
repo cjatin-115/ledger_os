@@ -44,7 +44,7 @@ export async function getEffectiveBaseUrl(): Promise<string> {
     const clean = candidate.replace(/\/+$/, '');
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       const res = await fetch(`${clean}/api/v1/health`, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
@@ -56,8 +56,9 @@ export async function getEffectiveBaseUrl(): Promise<string> {
     }
   }
 
-  cachedBaseUrl = DEFAULT_PROD_URL.replace(/\/+$/, '');
-  return cachedBaseUrl;
+  // If no candidate succeeded, default to API_BASE_URL or DEFAULT_PROD_URL without caching
+  // so subsequent retry attempts will re-probe when the server wakes up.
+  return (API_BASE_URL || DEFAULT_PROD_URL).replace(/\/+$/, '');
 }
 
 async function refreshAccessToken(): Promise<boolean> {
@@ -124,13 +125,24 @@ export async function apiRequest<T>(
 }
 
 export async function checkBackendHealth(): Promise<boolean> {
-  const baseUrl = await getEffectiveBaseUrl();
   try {
-    const response = await fetch(`${baseUrl}/api/v1/health`);
-    if (response.ok) return true;
+    const baseUrl = await getEffectiveBaseUrl();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const response = await fetch(`${baseUrl}/api/v1/health`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      cachedBaseUrl = baseUrl;
+      return true;
+    }
     const fallbackRes = await fetch(`${baseUrl}/health`);
-    return fallbackRes.ok;
+    if (fallbackRes.ok) {
+      cachedBaseUrl = baseUrl;
+      return true;
+    }
+    return false;
   } catch {
+    cachedBaseUrl = null;
     return false;
   }
 }

@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -11,8 +13,31 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.core.logging import get_logger
+from app.db import models  # noqa: F401
+from app.db.base import Base
+from app.db.seed import seed_development_data
+from app.db.session import AsyncSessionLocal, engine
 
 logger = get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables verified.")
+    except Exception as exc:
+        logger.warning(f"Database schema check skipped/failed: {exc}")
+
+    try:
+        async with AsyncSessionLocal() as session:
+            await seed_development_data(session)
+        logger.info("Seed data verified.")
+    except Exception as exc:
+        logger.warning(f"Database seed data check skipped/failed: {exc}")
+
+    yield
 
 
 def create_app() -> FastAPI:
@@ -21,6 +46,7 @@ def create_app() -> FastAPI:
         version=settings.VERSION,
         description="Professional core backend for LedgerOS",
         debug=settings.DEBUG,
+        lifespan=lifespan,
     )
 
     app.add_middleware(
