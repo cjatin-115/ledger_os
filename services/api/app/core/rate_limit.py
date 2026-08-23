@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 
 from fastapi import HTTPException, Request, status
@@ -5,6 +6,7 @@ from redis.asyncio import Redis
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 _redis: Redis | None = None
 
 
@@ -31,11 +33,7 @@ def rate_limit(scope: str, limit: int, window_seconds: int) -> Callable:
                 results = await pipeline.execute()
             request_count = int(results[0])
         except Exception as exc:
-            if settings.ENVIRONMENT == "production":
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Authentication protection is temporarily unavailable.",
-                ) from exc
+            logger.warning(f"Redis rate limiting bypassed (unavailable): {exc}")
             return
 
         if request_count > limit:

@@ -6,8 +6,8 @@ const hostIp = debuggerHost ? debuggerHost.split(':')[0] : (Platform.OS === 'and
 
 export const APP_NAME = 'LedgerOS';
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || `http://${hostIp}:8000`;
+const rawUrl = process.env.EXPO_PUBLIC_API_URL || `http://${hostIp}:8000`;
+export const API_BASE_URL = rawUrl.replace(/\/+$/, '');
 
 export * from './theme';
 export * from './layout';
