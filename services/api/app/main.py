@@ -87,6 +87,7 @@ def create_app() -> FastAPI:
         )
 
     @app.get("/")
+    @app.head("/", include_in_schema=False)
     async def root() -> dict[str, str]:
         return {
             "message": "Ledger OS API is operational",
@@ -94,6 +95,7 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/health")
+    @app.head("/health", include_in_schema=False)
     async def health_check() -> dict[str, str]:
         return {"status": "healthy"}
 

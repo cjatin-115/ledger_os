@@ -10,11 +10,13 @@ router = APIRouter(tags=["Health"])
 
 
 @router.get("/health")
+@router.head("/health", include_in_schema=False)
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @router.get("/health/ready")
+@router.head("/health/ready", include_in_schema=False)
 async def readiness_check(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:

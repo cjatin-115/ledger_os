@@ -13,6 +13,33 @@ async def test_health_endpoint():
 
 
 @pytest.mark.asyncio
+async def test_head_and_get_health_endpoints():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # /health endpoint (used by UptimeRobot & Render health checks)
+        res_head = await ac.head("/health")
+        assert res_head.status_code == 200
+        assert res_head.content == b""
+
+        res_get = await ac.get("/health")
+        assert res_get.status_code == 200
+        assert res_get.json() == {"status": "healthy"}
+
+        # root / endpoint
+        root_head = await ac.head("/")
+        assert root_head.status_code == 200
+        assert root_head.content == b""
+
+        root_get = await ac.get("/")
+        assert root_get.status_code == 200
+
+        # /api/v1/health endpoint
+        api_head = await ac.head("/api/v1/health")
+        assert api_head.status_code == 200
+        assert api_head.content == b""
+
+
+
+@pytest.mark.asyncio
 async def test_dashboard_returns_organization_summary(client):
     response = await client.get("/api/v1/dashboard")
 

@@ -26,10 +26,16 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "4bd5f44c-fef7-4eb4-8bd9-92b7a64ae64c"
       }
     },
     "android": {
-      "package": "com.ledgeros.mobile"
+      "package": "com.ledgeros.mobile",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     }
   }
 }
