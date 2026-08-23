@@ -1,14 +1,19 @@
 import asyncio
+import logging
 from logging.config import fileConfig
 
-from sqlalchemy import pool
+from sqlalchemy import inspect, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+from alembic.migration import MigrationContext
+from alembic.script import ScriptDirectory
 from app.core.config import settings
 from app.db import models  # noqa: F401
 from app.db.base import Base
+
+logger = logging.getLogger("alembic.env")
 
 config = context.config
 
@@ -41,6 +46,28 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     """Run migrations using an active database connection."""
+    inspector = inspect(connection)
+    has_alembic_version = inspector.has_table("alembic_version")
+    current_rev = None
+
+    if has_alembic_version:
+        mig_context = MigrationContext.configure(connection)
+        current_rev = mig_context.get_current_revision()
+
+    # If alembic_version has no revision recorded, but database tables already exist
+    # (e.g. created via Base.metadata.create_all during initial deployment),
+    # stamp to the current head revision so initial migrations do not fail with DuplicateTableError.
+    if current_rev is None and inspector.has_table("organizations"):
+        script = ScriptDirectory.from_config(config)
+        head_rev = script.get_current_head()
+        logger.info(
+            "Existing database schema detected without alembic tracking. Auto-stamping revision to %s",
+            head_rev,
+        )
+        mig_context = MigrationContext.configure(connection)
+        mig_context.stamp(script, head_rev)
+        return
+
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
